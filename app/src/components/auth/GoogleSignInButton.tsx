@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontWeight: '500',
     textAlign: 'center',
-    fontFamily: 'Quicksand_600SemiBold',
+    ...Typography.h6,
   },
   buttonText_small: {
     fontSize: 14,
