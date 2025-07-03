@@ -1,6 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
 import { colors } from '../../utils/colors';
+import { Typography } from '../../utils/typography';
 
 interface ButtonProps {
   title: string;
@@ -83,7 +84,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   text: {
-    fontFamily: 'Inter-SemiBold',
+    ...Typography.button,
     fontSize: 16,
   },
   primaryText: {
@@ -96,6 +97,7 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   smallText: {
+    ...Typography.buttonSmall,
     fontSize: 14,
   },
   mediumText: {

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { View, TextInput, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../utils/colors';
+import { Typography } from '../../utils/typography';
 
 interface InputProps {
   label?: string;
@@ -88,8 +89,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   label: {
+    ...Typography.label,
     fontSize: 14,
-    fontWeight: '600',
     color: colors.text.primary,
     marginBottom: 8,
   },
@@ -111,6 +112,7 @@ const styles = StyleSheet.create({
     borderColor: colors.error.main,
   },
   input: {
+    ...Typography.input,
     flex: 1,
     fontSize: 16,
     color: colors.text.primary,
@@ -128,6 +130,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   errorText: {
+    ...Typography.caption,
     fontSize: 12,
     color: colors.error.main,
     marginTop: 4,

@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import { colors } from '../../utils/colors';
+import { Typography } from '../../utils/typography';
 import { useAuth } from '../../contexts/AuthContext';
 import { dummyPrograms } from '../../services/dummyData';
 
@@ -176,13 +177,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   greeting: {
+    ...Typography.body1,
     fontSize: 16,
     color: colors.text.secondary,
-    fontFamily: 'Inter-Regular',
   },
   userName: {
+    ...Typography.h3,
     fontSize: 24,
-    fontFamily: 'Inter-SemiBold',
     color: colors.text.primary,
     marginTop: 4,
   },
@@ -200,8 +201,8 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   avatarText: {
+    ...Typography.h5,
     fontSize: 18,
-    fontFamily: 'Inter-SemiBold',
     color: colors.text.primary,
   },
   section: {
@@ -209,8 +210,8 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   sectionTitle: {
+    ...Typography.h4,
     fontSize: 20,
-    fontFamily: 'Inter-SemiBold',
     color: colors.text.primary,
     marginBottom: 16,
   },
@@ -227,11 +228,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   streakNumber: {
+    ...Typography.h1,
     fontSize: 32,
-    fontFamily: 'Inter-SemiBold',
     color: colors.text.primary,
   },
   streakLabel: {
+    ...Typography.body2,
     fontSize: 14,
     color: colors.text.secondary,
     marginTop: 4,
@@ -242,6 +244,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary.background,
   },
   streakMessage: {
+    ...Typography.body1,
     fontSize: 16,
     color: colors.text.primary,
     textAlign: 'center',
@@ -257,12 +260,13 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   programTitle: {
+    ...Typography.h5,
     fontSize: 18,
-    fontFamily: 'Inter-SemiBold',
     color: colors.text.primary,
     marginBottom: 4,
   },
   programSubtitle: {
+    ...Typography.body2,
     fontSize: 14,
     color: colors.text.secondary,
   },
@@ -283,8 +287,8 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   progressText: {
+    ...Typography.caption,
     fontSize: 12,
-    fontFamily: 'Inter-SemiBold',
     color: colors.text.secondary,
   },
   continueButton: {
@@ -311,13 +315,14 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   quickActionTitle: {
+    ...Typography.label,
     fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
     color: colors.text.primary,
     textAlign: 'center',
     marginBottom: 4,
   },
   quickActionSubtitle: {
+    ...Typography.caption,
     fontSize: 12,
     color: colors.text.secondary,
     textAlign: 'center',
@@ -326,12 +331,13 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   inspirationTitle: {
+    ...Typography.h6,
     fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
     color: colors.text.primary,
     marginBottom: 12,
   },
   inspirationText: {
+    ...Typography.body2,
     fontSize: 14,
     color: colors.text.secondary,
     lineHeight: 20,

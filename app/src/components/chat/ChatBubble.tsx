@@ -3,6 +3,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '../../utils/colors';
+import { Typography } from '../../utils/typography';
 import { AnimatedView } from '../common/AnimatedView';
 
 interface ChatBubbleProps {
@@ -75,6 +76,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border.light,
   },
   messageText: {
+    ...Typography.body1,
     fontSize: 16,
     lineHeight: 22,
   },
@@ -85,6 +87,7 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   timestamp: {
+    ...Typography.caption,
     fontSize: 12,
     marginTop: 4,
     marginHorizontal: 8,

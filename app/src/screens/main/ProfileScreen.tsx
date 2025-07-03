@@ -1,6 +1,6 @@
 // src/screens/main/ProfileScreen.tsx
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Switch } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Switch, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -10,8 +10,10 @@ import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import { ProgressBar } from '../../components/program/ProgressBar';
 import { dummyData } from '../../services/dummyData';
+import { useAuth } from '../../contexts/AuthContext';
 
 export const ProfileScreen: React.FC = () => {
+  const { signOut } = useAuth();
   const [user, setUser] = useState<any>(null);
   const [stats, setStats] = useState<any>(null);
   const [notifications, setNotifications] = useState(true);
@@ -26,8 +28,31 @@ export const ProfileScreen: React.FC = () => {
     // Navigate to edit profile screen
   };
 
-  const handleSignOut = () => {
-    // Handle sign out
+  const handleSignOut = async () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel'
+        },
+        {
+          text: 'Sign Out',
+          onPress: async () => {
+            try {
+              await signOut();
+            } catch (error) {
+              Alert.alert(
+                'Error',
+                'Failed to sign out. Please try again.',
+                [{ text: 'OK' }]
+              );
+            }
+          }
+        }
+      ]
+    );
   };
 
   if (!user || !stats) {

@@ -1,185 +1,326 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import React, { useState, useEffect, useRef, JSX } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Dimensions,
+  TouchableOpacity,
+  ImageBackground,
+  StatusBar,
+  ScrollView,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Alert
+} from 'react-native';
+import Animated, { FadeInDown, FadeInUp, useSharedValue } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import Button from '../../components/common/Button';
-import Card from '../../components/common/Card';
-import { colors } from '../../utils/colors';
 import { useAuth } from '../../contexts/AuthContext';
+import { Typography } from '../../utils/typography';
+import { GoogleSignInButton } from '../../components/auth/GoogleSignInButton';
+import { GoogleSignInButton as GoogleSignInButtonComponent } from '../../components/auth/GoogleSignInButton';
 
-const SignInScreen = ({ navigation }: any) => {
-  const [email, setEmail] = useState('demo@innerlight.com');
-  const [isLoading, setIsLoading] = useState(false);
+const { width, height } = Dimensions.get('window');
+
+interface Slide {
+  id: number;
+  image: string;
+  title: string;
+  subtitle: string;
+}
+
+interface SignInScreenProps {
+  navigation: any;
+}
+
+const slides: Slide[] = [
+  {
+    id: 1,
+    image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80',
+    title: 'INNER LIGHT',
+    subtitle: 'Transform your mindset, embrace your potential'
+  },
+  {
+    id: 2,
+    image: 'https://images.unsplash.com/photo-1519904981063-b0cf448d479e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80',
+    title: 'INNER LIGHT',
+    subtitle: 'Discover peace within, find strength beyond'
+  },
+  {
+    id: 3,
+    image: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80',
+    title: 'INNER LIGHT',
+    subtitle: 'Journey inward, shine outward, live fully'
+  }
+];
+
+const SignInScreen: React.FC<SignInScreenProps> = ({ navigation }) => {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [currentSlide, setCurrentSlide] = useState<number>(0);
   const { signIn } = useAuth();
+  const scrollViewRef = useRef<ScrollView>(null);
+  const slideAnimation = useSharedValue(0);
 
-  const handleSignIn = async () => {
-    if (!email.trim()) {
-      Alert.alert('Error', 'Please enter your email address');
-      return;
-    }
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev: number) => {
+        const nextSlide = (prev + 1) % slides.length;
+        scrollViewRef.current?.scrollTo({
+          x: nextSlide * width,
+          animated: true
+        });
+        return nextSlide;
+      });
+    }, 3000);
 
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const slideIndex = Math.round(event.nativeEvent.contentOffset.x / width);
+    setCurrentSlide(slideIndex);
+  };
+
+  const handleExploreApp = async (): Promise<void> => {
     setIsLoading(true);
     try {
-      await signIn(email);
+      await signIn('demo@innerlight.com');
     } catch (error) {
-      Alert.alert('Error', 'Failed to sign in. Please try again.');
+      Alert.alert('Error', 'Failed to explore app. Please try again.', [
+        { text: 'OK' }
+      ]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleGoogleSignIn = () => {
-    Alert.alert('Google Sign-In', 'Google Sign-In will be integrated with Firebase Auth');
+  const handleGoogleSignIn = async (): Promise<void> => {
+    try {
+      Alert.alert('Google Sign-In', 'Google authentication will be integrated with Firebase Auth');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to sign in with Google. Please try again.');
+    }
   };
 
-  return (
-    <LinearGradient
-      colors={colors.gradients.primary as [string, string, ...string[]]}
-      style={styles.container}
-    >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
+  const renderSlide = (slide: Slide, index: number): JSX.Element => (
+    <View key={slide.id} style={styles.slideContainer}>
+      <ImageBackground
+        source={{ uri: slide.image }}
+        style={styles.backgroundImage}
+        resizeMode="cover"
       >
-        <Animated.View
-          entering={FadeInDown.delay(200).springify()}
-          style={styles.header}
+        <LinearGradient
+          colors={['rgba(0,0,0,0.4)', 'rgba(0,0,0,0.6)']}
+          style={styles.overlay}
         >
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Sign in to continue your wellness journey</Text>
-        </Animated.View>
+          <Animated.View
+            entering={FadeInUp.delay(300).springify()}
+            style={styles.logoSection}
+          >
+            <Text style={styles.logoText}>{slide.title}</Text>
+            <Text style={styles.subtitle}>{slide.subtitle}</Text>
+          </Animated.View>
+        </LinearGradient>
+      </ImageBackground>
+    </View>
+  );
 
-        <Animated.View
-          entering={FadeInDown.delay(400).springify()}
-          style={styles.content}
+  return (
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+
+      {/* Image Slider */}
+      <ScrollView
+        ref={scrollViewRef}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+        style={styles.sliderContainer}
+      >
+        {slides.map((slide, index) => renderSlide(slide, index))}
+      </ScrollView>
+
+      {/* Bottom Section with Buttons */}
+      <Animated.View
+        entering={FadeInDown.delay(500).springify()}
+        style={styles.bottomSection}
+      >
+        <LinearGradient
+          colors={['#8B5CF6', '#7C3AED', '#6D28D9']}
+          style={styles.bottomGradient}
         >
-          <Card style={styles.card}>
-            <Text style={styles.label}>Email Address</Text>
-            <TextInput
-              style={styles.input}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="Enter your email"
-              placeholderTextColor={colors.primary.light}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-            />
+          <View style={styles.contentContainer}>
+            <Text style={styles.title}>Reach Your Potential</Text>
 
-            <Button
-              title={isLoading ? "Signing In..." : "Sign In"}
-              onPress={handleSignIn}
-              disabled={isLoading}
-              style={styles.signInButton}
-            />
-
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>or</Text>
-              <View style={styles.dividerLine} />
+            {/* Page Indicator Dots */}
+            <View style={styles.dotsContainer}>
+              {slides.map((_, index: number) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.dot,
+                    currentSlide === index ? styles.activeDot : null
+                  ]}
+                />
+              ))}
             </View>
 
-            <Button
-              title="Continue with Google"
-              onPress={handleGoogleSignIn}
-              variant="outline"
-              style={styles.googleButton}
-            />
-          </Card>
-        </Animated.View>
+            {/* Buttons */}
+            <View style={styles.buttonsContainer}>
+              <TouchableOpacity
+                style={[styles.exploreButton, isLoading && styles.buttonDisabled]}
+                onPress={handleExploreApp}
+                disabled={isLoading}
+              >
+                <Text style={styles.exploreButtonText}>
+                  {isLoading ? 'Loading...' : 'Explore The App'}
+                </Text>
+              </TouchableOpacity>
 
-        <Animated.View
-          entering={FadeInDown.delay(600).springify()}
-          style={styles.footer}
-        >
-          <Text style={styles.footerText}>
-            By signing in, you agree to our Terms of Service and Privacy Policy
-          </Text>
-        </Animated.View>
-      </KeyboardAvoidingView>
-    </LinearGradient>
+              <GoogleSignInButtonComponent
+                onPress={handleGoogleSignIn}
+                disabled={isLoading}
+              />
+            </View>
+
+            {/* Footer Text */}
+            <Text style={styles.footerText}>
+              By continuing you agree to INNER LIGHT's{' '}
+              <Text style={styles.linkText}>Terms of Service</Text> and{' '}
+              <Text style={styles.linkText}>Privacy Policy</Text>
+            </Text>
+          </View>
+        </LinearGradient>
+      </Animated.View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#000',
   },
-  keyboardView: {
+  sliderContainer: {
     flex: 1,
-    paddingHorizontal: 24,
   },
-  header: {
+  slideContainer: {
+    width: width,
+    height: '100%',
+  },
+  backgroundImage: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  overlay: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  title: {
-    fontSize: 28,
-    fontFamily: 'Inter-SemiBold',
-    color: colors.text.primary,
+  logoSection: {
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  logoText: {
+    ...Typography.h3,
+    fontSize: 36,
+    color: '#FFFFFF',
+    letterSpacing: 3,
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
     marginBottom: 8,
   },
   subtitle: {
+    ...Typography.body1,
     fontSize: 16,
-    color: colors.text.secondary,
+    color: '#FFFFFF',
     textAlign: 'center',
+    opacity: 0.9,
+    lineHeight: 22,
   },
-  content: {
-    flex: 2,
-    justifyContent: 'center',
+  bottomSection: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: height * 0.45,
   },
-  card: {
-    padding: 24,
-  },
-  label: {
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-    color: colors.text.primary,
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: colors.primary.background,
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    color: colors.text.primary,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: colors.primary.dark,
-  },
-  signInButton: {
-    marginBottom: 24,
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  dividerLine: {
+  bottomGradient: {
     flex: 1,
-    height: 1,
-    backgroundColor: colors.primary.light,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
   },
-  dividerText: {
-    marginHorizontal: 16,
-    color: colors.text.secondary,
-    fontSize: 14,
-  },
-  googleButton: {
-    // Custom styling for Google button
-  },
-  footer: {
+  contentContainer: {
     flex: 1,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 32,
     paddingBottom: 40,
+    justifyContent: 'space-between',
+  },
+  title: {
+    ...Typography.h3,
+    fontSize: 28,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  dotsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    marginHorizontal: 4,
+  },
+  activeDot: {
+    backgroundColor: '#FFFFFF',
+    width: 24,
+    borderRadius: 12,
+  },
+  buttonsContainer: {
+    gap: 16,
+    marginBottom: 30,
+  },
+  exploreButton: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 25,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  buttonDisabled: {
+    opacity: 0.7,
+  },
+  exploreButtonText: {
+    ...Typography.button,
+    color: '#8B5CF6',
+    fontSize: 16,
   },
   footerText: {
+    ...Typography.caption,
     fontSize: 12,
-    color: colors.text.secondary,
+    color: 'rgba(255, 255, 255, 0.7)',
     textAlign: 'center',
     lineHeight: 18,
+  },
+  linkText: {
+    ...Typography.caption,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
 });
 
