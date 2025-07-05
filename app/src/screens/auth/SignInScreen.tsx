@@ -83,7 +83,8 @@ const SignInScreen: React.FC<SignInScreenProps> = ({ navigation }) => {
   const handleExploreApp = async (): Promise<void> => {
     setIsLoading(true);
     try {
-      await signIn('demo@innerlight.com');
+      // Navigate to onboarding flow instead of signing in directly
+      navigation.navigate('OnboardingIntro');
     } catch (error) {
       Alert.alert('Error', 'Failed to explore app. Please try again.', [
         { text: 'OK' }
@@ -95,7 +96,8 @@ const SignInScreen: React.FC<SignInScreenProps> = ({ navigation }) => {
 
   const handleGoogleSignIn = async (): Promise<void> => {
     try {
-      Alert.alert('Google Sign-In', 'Google authentication will be integrated with Firebase Auth');
+      // Navigate to onboarding flow for Google sign in as well
+      navigation.navigate('OnboardingIntro');
     } catch (error) {
       Alert.alert('Error', 'Failed to sign in with Google. Please try again.');
     }
