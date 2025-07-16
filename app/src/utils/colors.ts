@@ -1,5 +1,19 @@
 // src/utils/colors.ts
 export const colors = {
+  // Common colors used in SignInScreen
+  black: '#000',
+  white: '#FFFFFF',
+  // Purples for gradient and buttons
+  purple: {
+    main: '#8B5CF6',
+    medium: '#7C3AED',
+    dark: '#6D28D9',
+  },
+  // Overlay gradients
+  overlayGradient: ['rgba(0,0,0,0.4)', 'rgba(0,0,0,0.6)'],
+  // Dot and footer colors
+  dotInactive: 'rgba(255, 255, 255, 0.3)',
+  footerText: 'rgba(255, 255, 255, 0.7)',
   // Primary colors - soft blue palette
   primary: {
     main: '#6B9EF5',        // Soft blue
@@ -93,6 +107,8 @@ export const colors = {
     sunset: ['#F7C4A8', '#F59E7E', '#F5D67E'],
     ocean: ['#A8C8F7', '#6B9EF5', '#9B7EF5'],
     forest: ['#A8F7C4', '#7EF59B', '#6B9EF5'],
+    // SignInScreen bottom section gradient
+    signInPurple: ['#8B5CF6', '#7C3AED', '#6D28D9'],
   },
 
   // Semantic colors for specific use cases

@@ -4,7 +4,6 @@ import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
-import { colors } from '../../utils/colors';
 import { Typography } from '../../utils/typography';
 import { useAuth } from '../../contexts/AuthContext';
 import { dummyPrograms } from '../../services/dummyData';
@@ -14,154 +13,157 @@ const { width } = Dimensions.get('window');
 const HomeScreen = ({ navigation }: any) => {
   const { state } = useAuth();
   const user = state.user;
-  const program = dummyPrograms[0];
 
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
+  // Sample program data based on the image
+  const programModules = [
+    {
+      id: 1,
+      title: "Welcome, It's Time to Start FACING IT",
+      type: "Lesson",
+      duration: "4 min",
+      image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+      isActive: true
+    },
+    {
+      id: 2,
+      title: "Imagine Your Ideal Life",
+      type: "Audio",
+      duration: "5 min",
+      image: "https://images.unsplash.com/photo-1519904981063-b0cf448d479e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+      isActive: false
+    },
+    {
+      id: 3,
+      title: "Take a Step Towards Your Ideal Life",
+      type: "Challenge",
+      duration: "",
+      image: "https://images.unsplash.com/photo-1518837695005-2083093ee35b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+      isActive: false
+    }
+  ];
+
+  const ProgramModule = ({ module, index }: any) => (
+    <Animated.View
+      entering={FadeInDown.delay(300 + index * 100).springify()}
+      style={styles.moduleContainer}
+    >
+      <TouchableOpacity style={styles.moduleCard}>
+        <View style={styles.moduleImageContainer}>
+          <View style={[styles.moduleImage, { backgroundColor: getModuleColor(index) }]}>
+            <Text style={styles.moduleImageText}>🎯</Text>
+          </View>
+        </View>
+        <View style={styles.moduleContent}>
+          <Text style={styles.moduleTitle}>{module.title}</Text>
+          <View style={styles.moduleInfo}>
+            <View style={styles.moduleTypeContainer}>
+              <Text style={styles.moduleType}>{module.type}</Text>
+            </View>
+            {module.duration && (
+              <View style={styles.moduleDuration}>
+                <Text style={styles.moduleDurationText}>⏱ {module.duration}</Text>
+              </View>
+            )}
+          </View>
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+
+  const getModuleColor = (index: number) => {
+    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57'];
+    return colors[index % colors.length];
   };
 
   return (
-    <LinearGradient
-      colors={colors.gradients.primary as [string, string, ...string[]]}
-      style={styles.container}
-    >
+    <View style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <Animated.View
           entering={FadeInDown.delay(200).springify()}
           style={styles.header}
         >
-          <View style={styles.headerContent}>
-            <View>
-              <Text style={styles.greeting}>{getGreeting()},</Text>
-              <Text style={styles.userName}>{user?.name}</Text>
-            </View>
-            <TouchableOpacity style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {user?.name?.charAt(0) || 'U'}
-              </Text>
+          <View style={styles.headerTop}>
+            <Text style={styles.headerTitle}>My Programs</Text>
+            <TouchableOpacity style={styles.addButton}>
+              <Text style={styles.addButtonText}>+</Text>
             </TouchableOpacity>
           </View>
-        </Animated.View>
 
-        {/* Streak Card */}
-        <Animated.View
-          entering={FadeInRight.delay(400).springify()}
-          style={styles.section}
-        >
-          <Card style={styles.streakCard}>
-            <View style={styles.streakContent}>
-              <View style={styles.streakInfo}>
-                <Text style={styles.streakNumber}>{user?.streak || 0}</Text>
-                <Text style={styles.streakLabel}>Day Streak</Text>
-              </View>
-              <View style={styles.streakDivider} />
-              <View style={styles.streakInfo}>
-                <Text style={styles.streakNumber}>{user?.totalDaysCompleted || 0}</Text>
-                <Text style={styles.streakLabel}>Total Days</Text>
-              </View>
+          {/* Program Tabs */}
+          <View style={styles.tabsContainer}>
+            <TouchableOpacity style={[styles.tab, styles.activeTab]}>
+              <Text style={styles.activeTabText}>Intro</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.tab}>
+              <Text style={styles.tabText}>Communication skills</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Progress Indicators */}
+          <View style={styles.progressContainer}>
+            <View style={[styles.progressDot, styles.activeDot]}>
+              <Text style={styles.progressDotText}>1</Text>
             </View>
-            <Text style={styles.streakMessage}>
-              🔥 Keep it up! You're building a great habit.
-            </Text>
-          </Card>
-        </Animated.View>
-
-        {/* Current Program */}
-        <Animated.View
-          entering={FadeInDown.delay(600).springify()}
-          style={styles.section}
-        >
-          <Text style={styles.sectionTitle}>Continue Your Journey</Text>
-          <Card style={styles.programCard}>
-            <View style={styles.programHeader}>
-              <View style={styles.programInfo}>
-                <Text style={styles.programTitle}>{program.title}</Text>
-                <Text style={styles.programSubtitle}>
-                  Day {('currentDay' in program ? (program as any).currentDay : 1)} of {('duration' in program ? (program as any).duration : 1)}
-                </Text>
-              </View>
-              <View style={styles.progressContainer}>
-                <View style={styles.progressBar}>
-                  <View
-                    style={[
-                      styles.progressFill,
-                      { width: `${('progress' in program ? (program as any).progress : 0) * 100}%` }
-                    ]}
-                  />
-                </View>
-                <Text style={styles.progressText}>
-                  {Math.round(('progress' in program ? (program as any).progress : 0) * 100)}%
-                </Text>
-              </View>
+            <View style={styles.progressLine} />
+            <View style={styles.progressDot}>
+              <Text style={styles.progressDotText}>2</Text>
             </View>
-            <Button
-              title="Continue Program"
-              onPress={() => navigation.navigate('ProgramOverview')}
-              style={styles.continueButton}
-            />
-          </Card>
-        </Animated.View>
-
-        {/* Quick Actions */}
-        <Animated.View
-          entering={FadeInDown.delay(800).springify()}
-          style={styles.section}
-        >
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.quickActions}>
-            <QuickActionCard
-              icon="💬"
-              title="Chat with AI"
-              subtitle="Get instant support"
-              onPress={() => navigation.navigate('Chat')}
-            />
-            <QuickActionCard
-              icon="🧘"
-              title="Breathing Exercise"
-              subtitle="3 min relaxation"
-              onPress={() => navigation.navigate('Explore')}
-            />
+            <View style={styles.progressLine} />
+            <View style={styles.progressDot}>
+              <Text style={styles.progressDotText}>3</Text>
+            </View>
+            <View style={styles.progressLine} />
+            <View style={styles.progressDot}>
+              <Text style={styles.progressDotText}>4</Text>
+            </View>
           </View>
         </Animated.View>
 
-        {/* Today's Inspiration */}
+        {/* Program Modules */}
+        <View style={styles.modulesContainer}>
+          {programModules.map((module, index) => (
+            <ProgramModule key={module.id} module={module} index={index} />
+          ))}
+        </View>
+
+        {/* Full Program Button */}
+        <Animated.View
+          entering={FadeInDown.delay(800).springify()}
+          style={styles.fullProgramContainer}
+        >
+          <TouchableOpacity style={styles.fullProgramButton}>
+            <Text style={styles.fullProgramText}>≡ Full program</Text>
+          </TouchableOpacity>
+        </Animated.View>
+
+        {/* Challenges Section */}
         <Animated.View
           entering={FadeInDown.delay(1000).springify()}
-          style={[styles.section, { paddingBottom: 100 }]}
+          style={styles.challengesSection}
         >
-          <Card style={styles.inspirationCard}>
-            <Text style={styles.inspirationTitle}>💡 Today's Inspiration</Text>
-            <Text style={styles.inspirationText}>
-              "The journey of a thousand miles begins with one step. Every small action
-              you take today brings you closer to the confident, peaceful person you're becoming."
-            </Text>
-          </Card>
+          <View style={styles.challengesHeader}>
+            <Text style={styles.challengesTitle}>Challenges</Text>
+            <TouchableOpacity style={styles.addButton}>
+              <Text style={styles.addButtonText}>+</Text>
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.challengesSubtitle}>
+            Take a challenge to get closer{'\n'}to your better self
+          </Text>
         </Animated.View>
+
+        {/* Bottom padding for navigation */}
+        <View style={styles.bottomPadding} />
       </ScrollView>
-    </LinearGradient>
+    </View>
   );
 };
-
-const QuickActionCard = ({ icon, title, subtitle, onPress }: {
-  icon: string;
-  title: string;
-  subtitle: string;
-  onPress: () => void;
-}) => (
-  <TouchableOpacity style={styles.quickActionCard} onPress={onPress}>
-    <Text style={styles.quickActionIcon}>{icon}</Text>
-    <Text style={styles.quickActionTitle}>{title}</Text>
-    <Text style={styles.quickActionSubtitle}>{subtitle}</Text>
-  </TouchableOpacity>
-);
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#F8F9FA',
   },
   scrollView: {
     flex: 1,
@@ -170,178 +172,196 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingHorizontal: 24,
     paddingBottom: 20,
+    backgroundColor: '#FFFFFF',
   },
-  headerContent: {
+  headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  greeting: {
-    ...Typography.body1,
-    fontSize: 16,
-    color: colors.text.secondary,
-  },
-  userName: {
-    ...Typography.h3,
-    fontSize: 24,
-    color: colors.text.primary,
-    marginTop: 4,
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.primary.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: colors.text.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  avatarText: {
-    ...Typography.h5,
-    fontSize: 18,
-    color: colors.text.primary,
-  },
-  section: {
-    paddingHorizontal: 24,
     marginBottom: 24,
   },
-  sectionTitle: {
-    ...Typography.h4,
+  headerTitle: {
+    ...Typography.h3,
+    fontSize: 28,
+    color: '#2D3748',
+    fontWeight: '700',
+  },
+  addButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#8B5CF6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addButtonText: {
+    color: '#FFFFFF',
     fontSize: 20,
-    color: colors.text.primary,
-    marginBottom: 16,
+    fontWeight: '600',
   },
-  streakCard: {
-    padding: 20,
-  },
-  streakContent: {
+  tabsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 24,
   },
-  streakInfo: {
-    alignItems: 'center',
+  tab: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    marginRight: 12,
   },
-  streakNumber: {
-    ...Typography.h1,
-    fontSize: 32,
-    color: colors.text.primary,
+  activeTab: {
+    backgroundColor: '#8B5CF6',
   },
-  streakLabel: {
-    ...Typography.body2,
+  activeTabText: {
+    ...Typography.button,
+    color: '#FFFFFF',
     fontSize: 14,
-    color: colors.text.secondary,
-    marginTop: 4,
+    fontWeight: '600',
   },
-  streakDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: colors.primary.background,
-  },
-  streakMessage: {
-    ...Typography.body1,
-    fontSize: 16,
-    color: colors.text.primary,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  programCard: {
-    padding: 20,
-  },
-  programHeader: {
-    marginBottom: 20,
-  },
-  programInfo: {
-    marginBottom: 12,
-  },
-  programTitle: {
-    ...Typography.h5,
-    fontSize: 18,
-    color: colors.text.primary,
-    marginBottom: 4,
-  },
-  programSubtitle: {
-    ...Typography.body2,
+  tabText: {
+    ...Typography.button,
+    color: '#8B5CF6',
     fontSize: 14,
-    color: colors.text.secondary,
+    fontWeight: '600',
   },
   progressContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    justifyContent: 'flex-start',
+    paddingHorizontal: 8,
   },
-  progressBar: {
-    flex: 1,
-    height: 8,
-    backgroundColor: colors.primary.background,
-    borderRadius: 4,
+  progressDot: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#E2E8F0',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  progressFill: {
-    height: '100%',
-    backgroundColor: colors.text.primary,
-    borderRadius: 4,
+  activeDot: {
+    backgroundColor: '#8B5CF6',
   },
-  progressText: {
-    ...Typography.caption,
-    fontSize: 12,
-    color: colors.text.secondary,
+  progressDotText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
-  continueButton: {
-    // Additional styling if needed
+  progressLine: {
+    width: 24,
+    height: 2,
+    backgroundColor: '#E2E8F0',
+    marginHorizontal: 4,
   },
-  quickActions: {
-    flexDirection: 'row',
-    gap: 12,
+  modulesContainer: {
+    paddingHorizontal: 24,
+    paddingTop: 20,
   },
-  quickActionCard: {
-    flex: 1,
-    backgroundColor: colors.primary.background,
+  moduleContainer: {
+    marginBottom: 16,
+  },
+  moduleCard: {
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 16,
+    flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: colors.text.primary,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
   },
-  quickActionIcon: {
+  moduleImageContainer: {
+    marginRight: 16,
+  },
+  moduleImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  moduleImageText: {
     fontSize: 24,
-    marginBottom: 8,
   },
-  quickActionTitle: {
-    ...Typography.label,
-    fontSize: 14,
-    color: colors.text.primary,
-    textAlign: 'center',
-    marginBottom: 4,
+  moduleContent: {
+    flex: 1,
   },
-  quickActionSubtitle: {
-    ...Typography.caption,
-    fontSize: 12,
-    color: colors.text.secondary,
-    textAlign: 'center',
-  },
-  inspirationCard: {
-    padding: 20,
-  },
-  inspirationTitle: {
+  moduleTitle: {
     ...Typography.h6,
     fontSize: 16,
-    color: colors.text.primary,
+    color: '#2D3748',
+    fontWeight: '600',
+    marginBottom: 8,
+    lineHeight: 22,
+  },
+  moduleInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  moduleTypeContainer: {
+    backgroundColor: '#FFF3E0',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginRight: 12,
+  },
+  moduleType: {
+    ...Typography.caption,
+    color: '#FF8A65',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  moduleDuration: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  moduleDurationText: {
+    ...Typography.caption,
+    color: '#718096',
+    fontSize: 12,
+  },
+  fullProgramContainer: {
+    alignItems: 'flex-end',
+    paddingHorizontal: 24,
+    marginTop: 8,
+    marginBottom: 32,
+  },
+  fullProgramButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  fullProgramText: {
+    ...Typography.button,
+    color: '#8B5CF6',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  challengesSection: {
+    paddingHorizontal: 24,
+    marginBottom: 32,
+  },
+  challengesHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 12,
   },
-  inspirationText: {
+  challengesTitle: {
+    ...Typography.h4,
+    fontSize: 24,
+    color: '#2D3748',
+    fontWeight: '700',
+  },
+  challengesSubtitle: {
     ...Typography.body2,
     fontSize: 14,
-    color: colors.text.secondary,
+    color: '#718096',
+    textAlign: 'center',
     lineHeight: 20,
-    fontStyle: 'italic',
+  },
+  bottomPadding: {
+    height: 100,
   },
 });
 
