@@ -1,26 +1,33 @@
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import Admin from '../models/Admin';
+import User from '../models/User';
 
 passport.serializeUser((user: any, done) => {
-  done(null, user.id);
+  done(null, { id: user.id, type: user.type || 'user' });
 });
 
-passport.deserializeUser(async (id, done) => {
+passport.deserializeUser(async (serializedUser: any, done) => {
   try {
-    const admin = await Admin.findById(id);
-    done(null, admin);
+    if (serializedUser.type === 'admin') {
+      const admin = await Admin.findById(serializedUser.id);
+      done(null, admin);
+    } else {
+      const user = await User.findById(serializedUser.id);
+      done(null, user);
+    }
   } catch (err) {
     done(err, null);
   }
 });
 
-passport.use(
+// Admin Google Strategy (existing)
+passport.use('admin-google',
   new GoogleStrategy(
     {
       clientID: process.env.GOOGLE_CLIENT_ID || '',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-      callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:4000/api/auth/google/callback',
+      callbackURL: process.env.GOOGLE_ADMIN_CALLBACK_URL || 'http://localhost:4000/api/auth/admin/google/callback',
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -31,7 +38,35 @@ passport.use(
             email: profile.emails?.[0].value,
           });
         }
+        (admin as any).type = 'admin';
         return done(null, admin);
+      } catch (err) {
+        return done(err, false);
+      }
+    }
+  )
+);
+
+// User Google Strategy (new)
+passport.use('user-google',
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID || '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+      callbackURL: process.env.GOOGLE_USER_CALLBACK_URL || 'http://localhost:4000/api/auth/user/google/callback',
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        let user = await User.findOne({ email: profile.emails?.[0].value });
+        if (!user) {
+          user = await User.create({
+            name: profile.displayName,
+            email: profile.emails?.[0].value,
+            role: 'user',
+          });
+        }
+        (user as any).type = 'user';
+        return done(null, user);
       } catch (err) {
         return done(err, false);
       }

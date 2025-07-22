@@ -56,7 +56,7 @@ const slides: Slide[] = [
 const SignInScreen: React.FC<SignInScreenProps> = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [currentSlide, setCurrentSlide] = useState<number>(0);
-  const { signIn } = useAuth();
+  const { signInWithGoogle } = useAuth();
   const scrollViewRef = useRef<ScrollView>(null);
   const slideAnimation = useSharedValue(0);
 
@@ -95,11 +95,15 @@ const SignInScreen: React.FC<SignInScreenProps> = ({ navigation }) => {
   };
 
   const handleGoogleSignIn = async (): Promise<void> => {
+    setIsLoading(true);
     try {
-      // Navigate to onboarding flow for Google sign in as well
-      navigation.navigate('OnboardingIntro');
+      await signInWithGoogle();
+      // If successful, the AuthContext will handle the user state
+      // and the AppNavigator will automatically redirect to the main app
     } catch (error) {
       Alert.alert('Error', 'Failed to sign in with Google. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 

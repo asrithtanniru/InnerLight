@@ -1,13 +1,25 @@
 // src/services/api.ts
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE_URL = 'https://api.innerlight.app'; // Replace with actual API URL
+const API_BASE_URL = 'http://192.168.55.103:4000/api'; // Use your computer's IP address
+
+console.log('🌐 API Service initialized with URL:', API_BASE_URL);
 
 interface ApiResponse<T> {
   success: boolean;
   data?: T;
   message?: string;
   error?: string;
+}
+
+interface GoogleSignInResponse {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+  };
+  token: string;
 }
 
 class ApiService {
@@ -22,8 +34,9 @@ class ApiService {
   private async loadToken() {
     try {
       this.token = await AsyncStorage.getItem('accessToken');
+      console.log('🔑 Token loaded from storage:', this.token ? 'EXISTS' : 'NONE');
     } catch (error) {
-      console.error('Error loading token:', error);
+      console.error('❌ Error loading token:', error);
     }
   }
 
@@ -47,6 +60,9 @@ class ApiService {
       const url = `${this.baseURL}${endpoint}`;
       const headers = await this.getHeaders();
 
+      console.log('🌐 Making API request to:', url);
+      console.log('📤 Request options:', { method: options.method || 'GET', headers });
+
       const response = await fetch(url, {
         ...options,
         headers: {
@@ -55,7 +71,11 @@ class ApiService {
         },
       });
 
+      console.log('📡 Response status:', response.status);
+      console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
+
       const data = await response.json();
+      console.log('📥 Response data:', data);
 
       if (!response.ok) {
         throw new Error(data.message || 'API request failed');
@@ -63,7 +83,7 @@ class ApiService {
 
       return data;
     } catch (error) {
-      console.error('API request error:', error);
+      console.error('❌ API request error:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -72,10 +92,11 @@ class ApiService {
   }
 
   // Authentication
-  async googleSignIn(idToken: string, accessToken: string) {
-    return this.request('/auth/google-signin', {
+  async googleSignIn(idToken: string, accessToken: string, email: string, name: string) {
+    console.log('🔐 Calling googleSignIn with:', { email, name, idToken: idToken ? 'SET' : 'NOT SET', accessToken: accessToken ? 'SET' : 'NOT SET' });
+    return this.request<GoogleSignInResponse>('/auth/mobile/google-signin', {
       method: 'POST',
-      body: JSON.stringify({ idToken, accessToken }),
+      body: JSON.stringify({ idToken, accessToken, email, name }),
     });
   }
 
@@ -159,8 +180,28 @@ class ApiService {
 
   // Set token for authenticated requests
   setToken(token: string) {
+    console.log('🔑 Setting token:', token ? 'TOKEN SET' : 'NO TOKEN');
     this.token = token;
     AsyncStorage.setItem('accessToken', token);
+  }
+
+  // Clear token
+  clearToken() {
+    console.log('🔑 Clearing token');
+    this.token = null;
+    AsyncStorage.removeItem('accessToken');
+  }
+
+  // Sync user with backend using Firebase token
+  async syncUserWithBackend(user: any, firebaseToken: string) {
+    console.log('🔄 Syncing user with backend:', user.email);
+    return this.request('/auth/firebase-sync', {
+      method: 'POST',
+      body: JSON.stringify({
+        user,
+        firebaseToken,
+      }),
+    });
   }
 }
 
