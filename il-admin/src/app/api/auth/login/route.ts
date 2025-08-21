@@ -1,27 +1,63 @@
-
 import { NextResponse } from 'next/server';
-import { users } from '@/lib/placeholder-data';
+import clientPromise from '@/lib/db';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import { ObjectId } from 'mongodb';
+
+interface LoginRequestBody {
+  email: string;
+  password: string;
+}
 
 export async function POST(request: Request) {
   try {
-    const { email, password } = await request.json();
+    const { email, password }: LoginRequestBody = await request.json();
 
     if (!email || !password) {
-        return NextResponse.json({ message: 'Email and password are required' }, { status: 400 });
+      return NextResponse.json({ message: 'Email and password are required' }, { status: 400 });
     }
 
-    const user = users.find(u => u.email === email);
+    const client = await clientPromise;
+    const db = client.db('InnerLight');
 
-    // In a real app, you would verify the password hash
-    if (!user) {
-        return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
+    const user = await db.collection('admin').findOne({ email });
+
+    if (!user || !bcrypt.compareSync(password, user.password)) {
+      return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
     }
-    
-    // For this prototype, any password is fine if the user exists.
-    // In a real app, you'd generate and return a JWT.
-    return NextResponse.json({ token: `fake-jwt-for-${user.id}`, user });
+
+    const token = jwt.sign(
+      {
+        userId: (user._id as ObjectId).toString(),
+        email: user.email,
+      },
+      process.env.JWT_SECRET as string,
+      { expiresIn: '1d' }
+    );
+
+    // Create a response object
+    const response = NextResponse.json(
+      { 
+        message: 'Login successful', 
+        token: token, // Include token in response body for frontend compatibility
+        user: { userId: user._id, email: user.email } 
+      },
+      { status: 200 }
+    );
+
+    // Set JWT in HTTP-only cookie
+    response.cookies.set('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // secure cookies in production
+      sameSite: 'strict',
+      path: '/',
+      maxAge: 60 * 60 * 24, // 1 day
+    });
+
+    return response;
 
   } catch (error) {
-      return NextResponse.json({ message: 'An error occurred during login' }, { status: 500 });
+    console.error('[LOGIN_ERROR]', error);
+    return NextResponse.json({ message: 'An error occurred during login' }, { status: 500 });
   }
 }

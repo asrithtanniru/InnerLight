@@ -1,38 +1,40 @@
-
 import { NextResponse } from 'next/server';
-import { users } from '@/lib/placeholder-data';
-import { User } from '@/lib/types';
+import clientPromise from '@/lib/db';
+import bcrypt from 'bcryptjs';
+
+
+interface RegisterRequestBody {
+  email: string;
+  password: string;
+}
 
 export async function POST(request: Request) {
   try {
-    const { email, name, password } = await request.json();
+    const { email, password }: RegisterRequestBody = await request.json();
 
-    if (!email || !name || !password) {
-      return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
+    if (!email || !password) {
+      return NextResponse.json({ message: 'Email and password are required' }, { status: 400 });
     }
 
-    const existingUser = users.find(u => u.email === email);
+    const client = await clientPromise;
+    const db = client.db('InnerLight');
+
+    const existingUser = await db.collection('admin').findOne({ email });
     if (existingUser) {
-      return NextResponse.json({ message: 'User with this email already exists' }, { status: 409 });
+      return NextResponse.json({ message: 'User already exists' }, { status: 409 });
     }
 
-    const newUser: User = {
-      id: `USR${Date.now()}`,
-      name,
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const result = await db.collection('admin').insertOne({
       email,
-      role: 'user',
-      joined: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      avatarUrl: 'https://placehold.co/100x100.png',
-      fallback: name.substring(0, 2).toUpperCase(),
-      achievements: [],
-      progress: []
-    };
+      password: hashedPassword,
+      createdAt: new Date(),
+    });
 
-    users.push(newUser);
-
-    // In a real app, you'd return a JWT token here
-    return NextResponse.json({ message: 'User registered successfully', user: newUser }, { status: 201 });
+    return NextResponse.json({ message: 'User registered successfully', userId: result.insertedId });
   } catch (error) {
-    return NextResponse.json({ message: 'An error occurred', error: (error as Error).message }, { status: 500 });
+    console.error('[REGISTER_ERROR]', error);
+    return NextResponse.json({ message: 'An error occurred during registration' }, { status: 500 });
   }
 }

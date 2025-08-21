@@ -1,9 +1,230 @@
-
 import { NextResponse } from 'next/server';
-import { programs } from '@/lib/placeholder-data';
+import clientPromise from '@/lib/db';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import { ObjectId } from 'mongodb';
+import cloudinary from 'cloudinary';
+
+interface CreateProgramRequestBody {
+  token: string;
+  title: string;
+  description: string;
+  image?: string;
+  lessons?: string[];
+  active: boolean;
+  category: string;
+  difficulty: string;
+  duration: string;
+}
+
+export async function POST(request: Request) {
+  try {
+    const formData = await request.formData();
+    const title = formData.get('title') as string;
+    const description = formData.get('description') as string;
+    const lessons = formData.get('lessons');
+    const active = formData.get('active');
+    const category = formData.get('category') as string;
+    const difficulty = formData.get('difficulty') as string;
+    const duration = formData.get('duration') as string;
+    const imageFile = formData.get('image');
+
+    if (!title || !description || !active || !category || !difficulty || !duration) {
+      return NextResponse.json({ message: 'Title, description, active, category, difficulty, and duration are required' }, { status: 400 });
+    }
+    const client = await clientPromise;
+    const db = client.db('InnerLight');
+
+    // Get token from cookies
+    const cookieHeader = request.headers.get('cookie') || '';
+    const tokenMatch = cookieHeader.match(/token=([^;]+)/);
+    const token = tokenMatch ? tokenMatch[1] : null;
+    if (!token) {
+      return NextResponse.json({ message: 'Missing authentication token' }, { status: 401 });
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET as string);
+    } catch (err) {
+      console.error('[program_CREATE_ERROR][JWT]', err);
+      return NextResponse.json({ message: 'Invalid token' }, { status: 401 });
+    }
+
+    const userId = typeof decoded === 'object' && decoded !== null && 'userId' in decoded ? decoded.userId : null;
+    if (!userId) {
+      return NextResponse.json({ message: 'Invalid token payload' }, { status: 401 });
+    }
+    const adminUser = await db.collection('admin').findOne({ _id: new ObjectId(userId) });
+    if (!adminUser) {
+      return NextResponse.json({ message: 'Unauthorized: not an admin' }, { status: 403 });
+    }
+    let imageUrl = '';
+    if (imageFile && typeof imageFile === 'object' && 'arrayBuffer' in imageFile) {
+      // Configure Cloudinary
+      cloudinary.v2.config({
+        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+        api_key: process.env.CLOUDINARY_API_KEY,
+        api_secret: process.env.CLOUDINARY_API_SECRET,
+      });
+      const buffer = Buffer.from(await imageFile.arrayBuffer());
+      // Upload buffer to Cloudinary
+      imageUrl = await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.v2.uploader.upload_stream({ resource_type: 'image' }, (error, result) => {
+          if (error) {
+            console.error('[Cloudinary Upload Error]', error);
+            reject(error);
+          } else {
+            resolve(result?.secure_url || '');
+          }
+        });
+        uploadStream.end(buffer);
+      });
+    }
+
+    const newProgram = {
+      title,
+      description,
+      image: imageUrl,
+      lessons: lessons,
+      active,
+      category,
+      difficulty,
+      duration,
+      createdAt: new Date(),
+    };
+    const result = await db.collection('programs').insertOne(newProgram);
+    if (!result.acknowledged) {
+      return NextResponse.json({ message: 'Failed to create program' }, { status: 500 });
+    }
+
+    const createdProgram = { ...newProgram, _id: result.insertedId };
+    return NextResponse.json({ message: 'Program created successfully', program: createdProgram });
+  } catch (err) {
+    console.error('[program_CREATE_ERROR]', err);
+    return NextResponse.json({ message: 'An error occurred during program creation' }, { status: 500 });
+  }
+}
 
 export async function GET(request: Request) {
-  // Only return active programs to general users
-  const activePrograms = programs.filter(p => p.active);
-  return NextResponse.json(activePrograms);
+  try {
+    const client = await clientPromise;
+    const db = client.db('InnerLight');
+    const programs = await db.collection('programs').find({}).toArray();
+    return NextResponse.json({ programs });
+  } catch (err) {
+    console.error('[program_GET_ERROR]', err);
+    return NextResponse.json({ message: 'An Error occured' }, { status: 500 });
+  }
+}
+
+
+export async function PUT(request: Request) {
+  try {
+    // Authenticate admin
+    const cookieHeader = request.headers.get('cookie') || '';
+    const tokenMatch = cookieHeader.match(/token=([^;]+)/);
+    const token = tokenMatch ? tokenMatch[1] : null;
+    if (!token) {
+      return NextResponse.json({ message: 'Missing authentication token' }, { status: 401 });
+    }
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET as string);
+    } catch (err) {
+      return NextResponse.json({ message: 'Invalid token' }, { status: 401 });
+    }
+    const userId = typeof decoded === 'object' && decoded !== null && 'userId' in decoded ? decoded.userId : null;
+    if (!userId) {
+      return NextResponse.json({ message: 'Invalid token payload' }, { status: 401 });
+    }
+    const client = await clientPromise;
+    const db = client.db('InnerLight');
+    const adminUser = await db.collection('admin').findOne({ _id: new ObjectId(userId) });
+    if (!adminUser) {
+      return NextResponse.json({ message: 'Unauthorized: not an admin' }, { status: 403 });
+    }
+
+    // Parse body
+    const body = await request.json();
+    const { id, title, description, category, duration, difficulty, active, image, lessons } = body;
+    if (!id) {
+      return NextResponse.json({ message: 'Program id is required' }, { status: 400 });
+    }
+    const updateFields: any = {};
+    if (title !== undefined) updateFields.title = title;
+    if (description !== undefined) updateFields.description = description;
+    if (category !== undefined) updateFields.category = category;
+    if (duration !== undefined) updateFields.duration = duration;
+    if (difficulty !== undefined) updateFields.difficulty = difficulty;
+    if (active !== undefined) updateFields.active = active;
+    if (image !== undefined) updateFields.image = image;
+    if (lessons !== undefined) updateFields.lessons = lessons;
+
+    const result = await db.collection('programs').updateOne(
+      { _id: new ObjectId(id) },
+      { $set: updateFields }
+    );
+    if (result.matchedCount === 0) {
+      return NextResponse.json({ message: 'Program not found' }, { status: 404 });
+    }
+    return NextResponse.json({ message: 'Program updated successfully' });
+  } catch (err) {
+    console.error('[program_UPDATE_ERROR]', err);
+    return NextResponse.json({ message: 'An error occurred during program update' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    // Authenticate admin
+    const cookieHeader = request.headers.get('cookie') || '';
+    const tokenMatch = cookieHeader.match(/token=([^;]+)/);
+    const token = tokenMatch ? tokenMatch[1] : null;
+    if (!token) {
+      return NextResponse.json({ message: 'Missing authentication token' }, { status: 401 });
+    }
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET as string);
+    } catch (err) {
+      return NextResponse.json({ message: 'Invalid token' }, { status: 401 });
+    }
+    const userId = typeof decoded === 'object' && decoded !== null && 'userId' in decoded ? decoded.userId : null;
+    if (!userId) {
+      return NextResponse.json({ message: 'Invalid token payload' }, { status: 401 });
+    }
+    const client = await clientPromise;
+    const db = client.db('InnerLight');
+    const adminUser = await db.collection('admin').findOne({ _id: new ObjectId(userId) });
+    if (!adminUser) {
+      return NextResponse.json({ message: 'Unauthorized: not an admin' }, { status: 403 });
+    }
+
+    // Get id from query or body
+    let id = '';
+    if (request.method === 'DELETE') {
+      // Try to get id from query string
+      const url = new URL(request.url);
+      id = url.searchParams.get('id') || '';
+      if (!id) {
+        // Try to get id from body
+        try {
+          const body = await request.json();
+          id = body.id || '';
+        } catch { }
+      }
+    }
+    if (!id) {
+      return NextResponse.json({ message: 'Program id is required' }, { status: 400 });
+    }
+    const result = await db.collection('programs').deleteOne({ _id: new ObjectId(id) });
+    if (result.deletedCount === 0) {
+      return NextResponse.json({ message: 'Program not found' }, { status: 404 });
+    }
+    return NextResponse.json({ message: 'Program deleted successfully' });
+  } catch (err) {
+    console.error('[program_DELETE_ERROR]', err);
+    return NextResponse.json({ message: 'An error occurred during program deletion' }, { status: 500 });
+  }
 }

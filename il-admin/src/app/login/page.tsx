@@ -1,22 +1,81 @@
-
 'use client';
 
-import {Button} from '@/components/ui/button';
-import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
-import {Input} from '@/components/ui/input';
-import {Label} from '@/components/ui/label';
-import {InnerLightIcon} from '@/components/icons';
-import {useRouter} from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { InnerLightIcon } from '@/components/icons';
 
 export default function LoginPage() {
   const router = useRouter();
+  const [email, setEmail] = useState('admin@innerlight.com');
+  const [password, setPassword] = useState('password');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleLogin = (e: React.FormEvent) => {
+  // Check if user is already authenticated
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch('/api/auth/me', {
+          method: 'GET',
+          credentials: 'include', // Include cookies
+        });
+
+        if (res.ok) {
+          // User is already authenticated, redirect to dashboard
+          router.push('/');
+          return;
+        }
+      } catch (error) {
+        // User is not authenticated, continue to login page
+        console.log('User not authenticated');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, [router]);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, you'd have authentication logic here.
-    // For this prototype, we'll just navigate to the dashboard.
-    router.push('/');
+    setError('');
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.message || 'Login failed');
+        return;
+      }
+
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('userId', data.user?.userId);
+
+      router.push('/');
+    } catch (err) {
+      console.error('Login error:', err);
+      setError('Something went wrong. Please try again.');
+    }
   };
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background">
@@ -41,15 +100,24 @@ export default function LoginPage() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="admin@innerlight.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
-                    defaultValue="admin@innerlight.com"
                   />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="password">Password</Label>
-                  <Input id="password" type="password" required defaultValue="password" />
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
                 </div>
+
+                {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+
                 <Button type="submit" className="w-full">
                   Login
                 </Button>

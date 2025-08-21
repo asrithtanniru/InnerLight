@@ -1,15 +1,9 @@
-
 "use client"
 import * as React from 'react'
-
+import { useRouter } from 'next/navigation'
 import {
-    SidebarProvider,
-    Sidebar,
-    SidebarHeader,
-    SidebarContent,
-    SidebarFooter,
-    SidebarTrigger,
-    SidebarInset
+    SidebarProvider, Sidebar, SidebarHeader, SidebarContent,
+    SidebarFooter, SidebarTrigger, SidebarInset
 } from '@/components/ui/sidebar'
 import { InnerLightIcon } from './icons'
 import { AdminNav } from './admin-nav'
@@ -18,15 +12,60 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { Bell, Search } from 'lucide-react'
 import { Input } from './ui/input'
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
+    DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+    DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
+    const [userEmail, setUserEmail] = React.useState<string>("")
+    const router = useRouter()
+
+    const getDetails = async () => {
+        try {
+            const response = await fetch('/api/auth/me', {
+                method: 'GET',
+                credentials: 'include', // Include cookies
+            })
+
+            if (response.ok) {
+                const data = await response.json()
+                setUserEmail(data.user.email)
+            } else {
+                // If auth fails, redirect to login
+                router.push('/login')
+            }
+        } catch (err) {
+            console.error("Error fetching user details:", err)
+            router.push('/login')
+        }
+    }
+
+    const handleLogout = async () => {
+        try {
+            await fetch('/api/auth/logout', {
+                method: 'POST',
+                credentials: 'include',
+            })
+
+            // Clear localStorage
+            localStorage.removeItem('token')
+            localStorage.removeItem('userId')
+
+            // Redirect to login
+            router.push('/login')
+        } catch (err) {
+            console.error("Error during logout:", err)
+            // Even if logout fails, clear local data and redirect
+            localStorage.removeItem('token')
+            localStorage.removeItem('userId')
+            router.push('/login')
+        }
+    }
+
+    React.useEffect(() => {
+        getDetails()
+    }, [])
+
     return (
         <SidebarProvider>
             <Sidebar>
@@ -44,21 +83,21 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="justify-start w-full gap-2 p-2 h-11">
                                 <Avatar className="w-8 h-8">
-                                    <AvatarImage src="https://placehold.co/100x100.png" alt="@shadcn" data-ai-hint="woman smiling" />
-                                    <AvatarFallback>AD</AvatarFallback>
+                                    <AvatarImage src="https://placehold.co/100x100.png" alt="@shadcn" />
+                                    <AvatarFallback>{userEmail ? userEmail.charAt(0).toUpperCase() : "A"}</AvatarFallback>
                                 </Avatar>
                                 <div className='flex flex-col items-start'>
-                                    <span className="font-medium">Admin User</span>
-                                    <span className="text-xs text-muted-foreground">admin@innerlight.com</span>
+                                    <span className="font-medium">{userEmail}</span>
+                                    <span className="text-xs text-muted-foreground">{userEmail}</span>
                                 </div>
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-56" align="end" forceMount>
                             <DropdownMenuLabel className="font-normal">
                                 <div className="flex flex-col space-y-1">
-                                    <p className="text-sm font-medium leading-none">Admin User</p>
+                                    <p className="text-sm font-medium leading-none">{userEmail}</p>
                                     <p className="text-xs leading-none text-muted-foreground">
-                                        admin@innerlight.com
+                                        {userEmail}
                                     </p>
                                 </div>
                             </DropdownMenuLabel>
@@ -66,7 +105,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                             <DropdownMenuItem>Profile</DropdownMenuItem>
                             <DropdownMenuItem>Settings</DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem>Log out</DropdownMenuItem>
+                            <DropdownMenuItem onClick={handleLogout}>Log out</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </SidebarFooter>
