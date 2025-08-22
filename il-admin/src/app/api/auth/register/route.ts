@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import clientPromise from '@/lib/db';
+import { connectDB } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 
 
@@ -16,7 +16,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Email and password are required' }, { status: 400 });
     }
 
-    const client = await clientPromise;
+    const client = await connectDB();
     const db = client.db('InnerLight');
 
     const existingUser = await db.collection('admin').findOne({ email });

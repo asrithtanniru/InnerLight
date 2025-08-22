@@ -1,7 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
-import clientPromise from '@/lib/db';
+import { connectDB } from '@/lib/db';
 import { ObjectId } from 'mongodb';
 
 export async function GET(request: Request) {
@@ -21,7 +21,7 @@ export async function GET(request: Request) {
         const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as any;
 
         // Get user from database
-        const client = await clientPromise;
+        const client = await connectDB();
         const db = client.db('InnerLight');
 
         const user = await db.collection('admin').findOne({

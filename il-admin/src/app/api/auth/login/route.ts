@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import clientPromise from '@/lib/db';
+import { connectDB } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { ObjectId } from 'mongodb';
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Email and password are required' }, { status: 400 });
     }
 
-    const client = await clientPromise;
+    const client = await connectDB();
     const db = client.db('InnerLight');
 
     const user = await db.collection('admin').findOne({ email });
@@ -37,10 +37,10 @@ export async function POST(request: Request) {
 
     // Create a response object
     const response = NextResponse.json(
-      { 
-        message: 'Login successful', 
+      {
+        message: 'Login successful',
         token: token, // Include token in response body for frontend compatibility
-        user: { userId: user._id, email: user.email } 
+        user: { userId: user._id, email: user.email }
       },
       { status: 200 }
     );

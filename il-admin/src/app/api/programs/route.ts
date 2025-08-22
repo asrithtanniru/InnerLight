@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import clientPromise from '@/lib/db';
+import { connectDB } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { ObjectId } from 'mongodb';
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     if (!title || !description || !active || !category || !difficulty || !duration) {
       return NextResponse.json({ message: 'Title, description, active, category, difficulty, and duration are required' }, { status: 400 });
     }
-    const client = await clientPromise;
+    const client = await connectDB();
     const db = client.db('InnerLight');
 
     // Get token from cookies
@@ -108,7 +108,7 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   try {
-    const client = await clientPromise;
+    const client = await connectDB();
     const db = client.db('InnerLight');
     const programs = await db.collection('programs').find({}).toArray();
     return NextResponse.json({ programs });
@@ -138,7 +138,7 @@ export async function PUT(request: Request) {
     if (!userId) {
       return NextResponse.json({ message: 'Invalid token payload' }, { status: 401 });
     }
-    const client = await clientPromise;
+    const client = await connectDB();
     const db = client.db('InnerLight');
     const adminUser = await db.collection('admin').findOne({ _id: new ObjectId(userId) });
     if (!adminUser) {
@@ -194,7 +194,7 @@ export async function DELETE(request: Request) {
     if (!userId) {
       return NextResponse.json({ message: 'Invalid token payload' }, { status: 401 });
     }
-    const client = await clientPromise;
+    const client = await connectDB();
     const db = client.db('InnerLight');
     const adminUser = await db.collection('admin').findOne({ _id: new ObjectId(userId) });
     if (!adminUser) {
