@@ -6,17 +6,21 @@ import { ObjectId } from 'mongodb';
 
 export async function GET(request: Request) {
     try {
-        // Get token from cookies
-        const cookieHeader = request.headers.get('cookie');
-        const token = cookieHeader
-            ?.split(';')
-            ?.find(c => c.trim().startsWith('token='))
-            ?.split('=')[1];
-
+        // Get token from Authorization header or cookies
+        let token = null;
+        const authHeader = request.headers.get('authorization');
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            token = authHeader.substring(7);
+        } else {
+            const cookieHeader = request.headers.get('cookie');
+            token = cookieHeader
+                ?.split(';')
+                ?.find(c => c.trim().startsWith('token='))
+                ?.split('=')[1];
+        }
         if (!token) {
             return NextResponse.json({ message: 'No token provided' }, { status: 401 });
         }
-
         // Verify token
         const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as any;
 

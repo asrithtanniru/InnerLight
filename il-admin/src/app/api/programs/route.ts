@@ -35,14 +35,19 @@ export async function POST(request: Request) {
     const client = await connectDB();
     const db = client.db('InnerLight');
 
-    // Get token from cookies
-    const cookieHeader = request.headers.get('cookie') || '';
-    const tokenMatch = cookieHeader.match(/token=([^;]+)/);
-    const token = tokenMatch ? tokenMatch[1] : null;
+    // Get token from Authorization header or cookies
+    let token = null;
+    const authHeader = request.headers.get('authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.substring(7);
+    } else {
+      const cookieHeader = request.headers.get('cookie') || '';
+      const tokenMatch = cookieHeader.match(/token=([^;]+)/);
+      token = tokenMatch ? tokenMatch[1] : null;
+    }
     if (!token) {
       return NextResponse.json({ message: 'Missing authentication token' }, { status: 401 });
     }
-
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET as string);
@@ -50,7 +55,6 @@ export async function POST(request: Request) {
       console.error('[program_CREATE_ERROR][JWT]', err);
       return NextResponse.json({ message: 'Invalid token' }, { status: 401 });
     }
-
     const userId = typeof decoded === 'object' && decoded !== null && 'userId' in decoded ? decoded.userId : null;
     if (!userId) {
       return NextResponse.json({ message: 'Invalid token payload' }, { status: 401 });
@@ -108,6 +112,29 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   try {
+    // Authenticate admin using Bearer or cookie
+    let token = null;
+    const authHeader = request.headers.get('authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.substring(7);
+    } else {
+      const cookieHeader = request.headers.get('cookie') || '';
+      const tokenMatch = cookieHeader.match(/token=([^;]+)/);
+      token = tokenMatch ? tokenMatch[1] : null;
+    }
+    if (!token) {
+      return NextResponse.json({ message: 'Missing authentication token' }, { status: 401 });
+    }
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET as string);
+    } catch (err) {
+      return NextResponse.json({ message: 'Invalid token' }, { status: 401 });
+    }
+    const userId = typeof decoded === 'object' && decoded !== null && 'userId' in decoded ? decoded.userId : null;
+    if (!userId) {
+      return NextResponse.json({ message: 'Invalid token payload' }, { status: 401 });
+    }
     const client = await connectDB();
     const db = client.db('InnerLight');
     const programs = await db.collection('programs').find({}).toArray();
@@ -121,10 +148,16 @@ export async function GET(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    // Authenticate admin
-    const cookieHeader = request.headers.get('cookie') || '';
-    const tokenMatch = cookieHeader.match(/token=([^;]+)/);
-    const token = tokenMatch ? tokenMatch[1] : null;
+    // Authenticate admin using Bearer or cookie
+    let token = null;
+    const authHeader = request.headers.get('authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.substring(7);
+    } else {
+      const cookieHeader = request.headers.get('cookie') || '';
+      const tokenMatch = cookieHeader.match(/token=([^;]+)/);
+      token = tokenMatch ? tokenMatch[1] : null;
+    }
     if (!token) {
       return NextResponse.json({ message: 'Missing authentication token' }, { status: 401 });
     }
@@ -177,10 +210,16 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    // Authenticate admin
-    const cookieHeader = request.headers.get('cookie') || '';
-    const tokenMatch = cookieHeader.match(/token=([^;]+)/);
-    const token = tokenMatch ? tokenMatch[1] : null;
+    // Authenticate admin using Bearer or cookie
+    let token = null;
+    const authHeader = request.headers.get('authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.substring(7);
+    } else {
+      const cookieHeader = request.headers.get('cookie') || '';
+      const tokenMatch = cookieHeader.match(/token=([^;]+)/);
+      token = tokenMatch ? tokenMatch[1] : null;
+    }
     if (!token) {
       return NextResponse.json({ message: 'Missing authentication token' }, { status: 401 });
     }
