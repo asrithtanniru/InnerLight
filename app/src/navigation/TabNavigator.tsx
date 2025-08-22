@@ -13,6 +13,7 @@ import { ProgramOverviewScreen } from '../screens/program/ProgramOverviewScreen'
 import { LessonScreen } from '../screens/program/LessonScreen';
 import { ChallengeScreen } from '../screens/program/ChallengeScreen';
 import { ExerciseScreen } from '../screens/program/ExerciseScreen';
+import { Typography } from '../utils/typography';
 
 // Define the param list for the Home Stack
 export type HomeStackParamList = {
@@ -84,7 +85,7 @@ const TabNavigator = () => {
           borderTopWidth: 1,
           paddingTop: 8,
           paddingBottom: 8,
-          height: 70,
+          height: 80,
           shadowColor: colors.shadow.main,
           shadowOffset: { width: 0, height: -2 },
           shadowOpacity: 0.1,
@@ -95,6 +96,7 @@ const TabNavigator = () => {
           fontSize: 12,
           fontWeight: '600',
           marginTop: 4,
+          fontFamily: Typography.caption.fontFamily,
         },
         headerShown: false,
       })}

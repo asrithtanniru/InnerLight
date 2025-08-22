@@ -40,11 +40,10 @@ const OnboardingThankYouScreen: React.FC<OnboardingThankYouScreenProps> = ({ nav
       // Sign in the user with demo credentials and navigate to home
       await signIn('demo@innerlight.com');
       // Store user preferences for later use
-      // You could extend the AuthContext to handle these preferences
+      // Auth state will handle navigation to the main app
     } catch (error) {
       console.error('Failed to sign in:', error);
-      // Fallback navigation in case of error
-      navigation.navigate('Home');
+      // Fallback: do nothing; auth state may not have updated
     }
   };
 

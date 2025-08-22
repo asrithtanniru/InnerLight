@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, FlatList, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, KeyboardAvoidingView, Platform, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Typography } from '../../utils/typography';
@@ -116,7 +116,7 @@ export const ChatScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       {/* Header */}
       <Animated.View
         entering={FadeInDown.delay(200)}
@@ -125,8 +125,12 @@ export const ChatScreen: React.FC = () => {
         <View style={styles.headerContent}>
           <View style={styles.avatarContainer}>
             <Text style={styles.avatarText}>🤖</Text>
+            <Image
+              source={{ uri: 'https://inner-light-mu.vercel.app/favicon.ico' }}
+              style={styles.avatarImage}
+            />
           </View>
-          <Text style={styles.headerTitle}>Eden AI</Text>
+          <Text style={styles.headerTitle}>Kev AI</Text>
         </View>
         <View style={styles.headerDivider} />
       </Animated.View>
@@ -220,6 +224,14 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 12,
     overflow: 'hidden',
+  },
+  avatarImage: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    position: 'absolute',
+    top: 4,
+    left: 4,
   },
 });
 

@@ -23,14 +23,13 @@ export const Typography = {
     fontFamily: FontFamily.bold,
     fontSize: 28,
     lineHeight: 36,
-    fontWeight: '700',
   } as TextStyle,
 
   h3: {
     fontFamily: FontFamily.semiBold,
     fontSize: 24,
     lineHeight: 32,
-    fontWeight: '600',
+    // fontWeight: '600',
   } as TextStyle,
 
   h4: {

@@ -1,107 +1,132 @@
 // src/screens/main/ExploreScreen.tsx
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '../../utils/colors';
+import { Typography } from '../../utils/typography';
 import { AnimatedView } from '../../components/common/AnimatedView';
-import { Input } from '../../components/common/Input';
-import Card from '../../components/common/Card';
-import { dummyData } from '../../services/dummyData';
 
 export const ExploreScreen: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [categories, setCategories] = useState<any[]>([]);
-  const [content, setContent] = useState<any[]>([]);
-  const [filteredContent, setFilteredContent] = useState<any[]>([]);
-
-  useEffect(() => {
-    setCategories(dummyData.exploreCategories);
-    setContent(dummyData.exploreContent);
-    setFilteredContent(dummyData.exploreContent);
-  }, []);
-
-  useEffect(() => {
-    let filtered = content;
-
-    if (selectedCategory) {
-      filtered = filtered.filter(item => item.category === selectedCategory);
+  // Mock data with web images
+  const challenges = [
+    {
+      id: '1',
+      title: 'Talk to Someone New Every Day',
+      duration: '7 days',
+      image: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400&h=400&fit=crop'
+    },
+    {
+      id: '2',
+      title: 'Speak with Confidence',
+      duration: '17 days',
+      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop'
+    },
+    {
+      id: '3',
+      title: 'Make New Friends',
+      duration: '14 days',
+      image: 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=400&h=400&fit=crop'
+    },
+    {
+      id: '4',
+      title: 'Public Speaking',
+      duration: '21 days',
+      image: 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=400&h=400&fit=crop'
+    },
+    {
+      id: '5',
+      title: 'Social Anxiety',
+      duration: '30 days',
+      image: 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?w=400&h=400&fit=crop'
     }
+  ];
 
-    if (searchQuery) {
-      filtered = filtered.filter(item =>
-        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+  const programs = [
+    {
+      id: '1',
+      title: 'Intro',
+      progress: 0.7,
+      image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=400&fit=crop'
+    },
+    {
+      id: '2',
+      title: 'Relationships with Colleagues',
+      image: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=400&h=400&fit=crop'
+    },
+    {
+      id: '3',
+      title: 'Communication Skills',
+      image: 'https://images.unsplash.com/photo-1556761175-b413da4baf72?w=400&h=400&fit=crop'
+    },
+    {
+      id: '4',
+      title: 'Leadership Development',
+      image: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=400&h=400&fit=crop'
+    },
+    {
+      id: '5',
+      title: 'Team Building',
+      image: 'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=400&h=400&fit=crop'
     }
+  ];
 
-    setFilteredContent(filtered);
-  }, [searchQuery, selectedCategory, content]);
+  const exercises = [
+    {
+      id: '1',
+      title: 'Breathing Exercise',
+      image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=400&fit=crop'
+    },
+    {
+      id: '2',
+      title: 'Meditation',
+      image: 'https://images.unsplash.com/photo-1545389336-cf090694435e?w=400&h=400&fit=crop'
+    },
+    {
+      id: '3',
+      title: 'Mindfulness',
+      image: 'https://images.unsplash.com/photo-1499209974431-9dddcece7f88?w=400&h=400&fit=crop'
+    },
+    {
+      id: '4',
+      title: 'Relaxation',
+      image: 'https://images.unsplash.com/photo-1506629905880-b2ce6d4d9dde?w=400&h=400&fit=crop'
+    },
+    {
+      id: '5',
+      title: 'Stress Relief',
+      image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=400&fit=crop'
+    }
+  ];
 
-  const renderCategory = ({ item, index }: { item: any; index: number }) => (
-    <AnimatedView animation="slideUp" delay={index * 100}>
-      <TouchableOpacity
-        style={[
-          styles.categoryCard,
-          selectedCategory === item.id && styles.selectedCategoryCard
-        ]}
-        onPress={() => setSelectedCategory(selectedCategory === item.id ? null : item.id)}
-      >
-        <LinearGradient
-          colors={[item.color + '20', item.color + '40']}
-          style={styles.categoryGradient}
-        >
-          <Ionicons name={item.icon} size={32} color={item.color} />
-          <Text style={styles.categoryName}>{item.name}</Text>
-          <Text style={styles.categoryCount}>{item.itemCount} items</Text>
-        </LinearGradient>
+  const renderCard = ({ item, showProgress = false }: { item: any; showProgress?: boolean }) => (
+    <View style={styles.cardWrapper}>
+      <TouchableOpacity style={styles.card}>
+        <View style={styles.imageContainer}>
+          <Image source={{ uri: item.image }} style={styles.cardImage} />
+        </View>
       </TouchableOpacity>
-    </AnimatedView>
-  );
 
-  const renderContentItem = ({ item, index }: { item: any; index: number }) => (
-    <AnimatedView animation="slideUp" delay={index * 50}>
-      <Card style={styles.contentCard}>
-        <View style={styles.contentHeader}>
-          <View style={styles.contentInfo}>
-            <Text style={styles.contentTitle}>{item.title}</Text>
-            <Text style={styles.contentDescription}>{item.description}</Text>
+      <View style={styles.cardInfo}>
+        <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
+
+        {item.duration && (
+          <View style={styles.durationContainer}>
+            <Ionicons name="time-outline" size={14} color={colors.text.secondary} />
+            <Text style={styles.cardDuration}>{item.duration}</Text>
           </View>
-          <TouchableOpacity style={styles.favoriteButton}>
-            <Ionicons
-              name={item.isFavorited ? "heart" : "heart-outline"}
-              size={24}
-              color={item.isFavorited ? colors.error.main : colors.text.secondary}
-            />
-          </TouchableOpacity>
-        </View>
+        )}
 
-        <View style={styles.contentMeta}>
-          <View style={styles.contentType}>
-            <Ionicons
-              name={getTypeIcon(item.type)}
-              size={16}
-              color={colors.primary.main}
-            />
-            <Text style={styles.contentTypeText}>{item.type}</Text>
+        {showProgress && item.progress && (
+          <View style={styles.progressContainer}>
+            <View style={styles.progressBar}>
+              <View style={[styles.progressFill, { width: `${item.progress * 100}%` }]} />
+            </View>
           </View>
-          <Text style={styles.contentDuration}>{item.duration}</Text>
-        </View>
-      </Card>
-    </AnimatedView>
+        )}
+      </View>
+    </View>
   );
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'exercise': return 'fitness-outline';
-      case 'article': return 'document-text-outline';
-      case 'video': return 'play-circle-outline';
-      case 'audio': return 'headset-outline';
-      default: return 'book-outline';
-    }
-  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -112,78 +137,60 @@ export const ExploreScreen: React.FC = () => {
           <Text style={styles.headerSubtitle}>Discover content to support your wellness journey</Text>
         </AnimatedView>
 
-        {/* Search */}
-        <AnimatedView animation="slideUp" delay={200} style={styles.searchSection}>
-          <Input
-            placeholder="Search for content..."
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            leftIcon="search-outline"
-            style={styles.searchInput}
-          />
-        </AnimatedView>
-
-        {/* Categories */}
-        <AnimatedView animation="slideUp" delay={400} style={styles.categoriesSection}>
-          <Text style={styles.sectionTitle}>Categories</Text>
-          <FlatList
-            data={categories}
-            renderItem={renderCategory}
-            keyExtractor={(item) => item.id}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.categoriesList}
-          />
-        </AnimatedView>
-
-        {/* Featured Content */}
-        {!selectedCategory && !searchQuery && (
-          <AnimatedView animation="slideUp" delay={600} style={styles.featuredSection}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Featured Content</Text>
-              <TouchableOpacity>
-                <Text style={styles.seeAllText}>See All</Text>
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {dummyData.featuredContent.map((item, index) => (
-                <AnimatedView key={item.id} animation="slideUp" delay={700 + index * 100}>
-                  <Card style={styles.featuredCard}>
-                    <LinearGradient
-                      colors={[colors.secondary.light, colors.secondary.main]}
-                      style={styles.featuredGradient}
-                    >
-                      <Ionicons name="star" size={24} color={colors.text.inverse} />
-                      <Text style={styles.featuredTitle}>{item.title}</Text>
-                      <Text style={styles.featuredDuration}>{item.duration}</Text>
-                    </LinearGradient>
-                  </Card>
-                  // src/screens/main/ExploreScreen.tsx (continued)
-                </AnimatedView>
-              ))}
-            </ScrollView>
-          </AnimatedView>
-        )}
-
-        {/* Content Results */}
-        <AnimatedView animation="slideUp" delay={800} style={styles.contentSection}>
+        {/* Challenges Section */}
+        <AnimatedView animation="slideUp" delay={200} style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>
-              {selectedCategory ?
-                categories.find(c => c.id === selectedCategory)?.name :
-                searchQuery ? `Results for "${searchQuery}"` : 'All Content'
-              }
-            </Text>
-            <Text style={styles.resultCount}>{filteredContent.length} items</Text>
+            <Text style={styles.sectionTitle}>Challenges</Text>
+            <TouchableOpacity>
+              <Text style={styles.seeAllText}>See all ›</Text>
+            </TouchableOpacity>
           </View>
 
           <FlatList
-            data={filteredContent}
-            renderItem={renderContentItem}
+            data={challenges}
+            renderItem={({ item }) => renderCard({ item })}
             keyExtractor={(item) => item.id}
-            scrollEnabled={false}
-            showsVerticalScrollIndicator={false}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalList}
+          />
+        </AnimatedView>
+
+        {/* Programs Section */}
+        <AnimatedView animation="slideUp" delay={400} style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Programs</Text>
+            <TouchableOpacity>
+              <Text style={styles.seeAllText}>See all ›</Text>
+            </TouchableOpacity>
+          </View>
+
+          <FlatList
+            data={programs}
+            renderItem={({ item }) => renderCard({ item, showProgress: true })}
+            keyExtractor={(item) => item.id}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalList}
+          />
+        </AnimatedView>
+
+        {/* Exercises Section */}
+        <AnimatedView animation="slideUp" delay={600} style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Exercises</Text>
+            <TouchableOpacity>
+              <Text style={styles.seeAllText}>See all ›</Text>
+            </TouchableOpacity>
+          </View>
+
+          <FlatList
+            data={exercises}
+            renderItem={({ item }) => renderCard({ item })}
+            keyExtractor={(item) => item.id}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalList}
           />
         </AnimatedView>
       </ScrollView>
@@ -201,65 +208,17 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
   headerTitle: {
-    fontSize: 32,
-    fontWeight: '700',
+    ...Typography.h2,
     color: colors.text.primary,
     marginBottom: 4,
   },
   headerSubtitle: {
-    fontSize: 16,
+    ...Typography.body1,
     color: colors.text.secondary,
     lineHeight: 22,
   },
-  searchSection: {
-    paddingHorizontal: 20,
-    marginBottom: 24,
-  },
-  searchInput: {
-    marginBottom: 0,
-  },
-  categoriesSection: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: colors.text.primary,
-    marginBottom: 16,
-    paddingHorizontal: 20,
-  },
-  categoriesList: {
-    paddingHorizontal: 20,
-  },
-  categoryCard: {
-    marginRight: 16,
-    borderRadius: 16,
-    overflow: 'hidden',
-    width: 140,
-  },
-  selectedCategoryCard: {
-    transform: [{ scale: 1.05 }],
-  },
-  categoryGradient: {
-    padding: 20,
-    alignItems: 'center',
-    minHeight: 120,
-    justifyContent: 'center',
-  },
-  categoryName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text.primary,
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  categoryCount: {
-    fontSize: 12,
-    color: colors.text.secondary,
-    marginTop: 4,
-  },
-  featuredSection: {
-    marginBottom: 24,
+  section: {
+    marginBottom: 32,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -268,91 +227,73 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 16,
   },
-  seeAllText: {
-    fontSize: 14,
-    color: colors.primary.main,
-    fontWeight: '600',
-  },
-  featuredCard: {
-    marginLeft: 20,
-    borderRadius: 16,
-    overflow: 'hidden',
-    width: 200,
-  },
-  featuredGradient: {
-    padding: 20,
-    alignItems: 'center',
-    minHeight: 140,
-    justifyContent: 'center',
-  },
-  featuredTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text.inverse,
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  featuredDuration: {
-    fontSize: 12,
-    color: colors.text.inverse,
-    opacity: 0.8,
-    marginTop: 4,
-  },
-  contentSection: {
-    paddingHorizontal: 20,
-    marginBottom: 40,
-  },
-  resultCount: {
-    fontSize: 14,
-    color: colors.text.secondary,
-  },
-  contentCard: {
-    marginBottom: 16,
-    padding: 16,
-  },
-  contentHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
-  },
-  contentInfo: {
-    flex: 1,
-    marginRight: 12,
-  },
-  contentTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+  sectionTitle: {
+    ...Typography.h3,
     color: colors.text.primary,
-    marginBottom: 4,
   },
-  contentDescription: {
-    fontSize: 14,
+  seeAllText: {
+    ...Typography.body2,
+    color: colors.text.primary,
+  },
+  horizontalList: {
+    paddingHorizontal: 20,
+  },
+  cardWrapper: {
+    width: 180,
+    marginRight: 16,
+  },
+  card: {
+    width: '100%',
+    height: 180,
+    borderRadius: 20,
+    overflow: 'hidden',
+    backgroundColor: '#fff',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  imageContainer: {
+    flex: 1,
+  },
+  cardImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  cardInfo: {
+    paddingTop: 12,
+    paddingHorizontal: 4,
+  },
+  cardTitle: {
+    ...Typography.h6,
+    color: colors.text.primary,
+    lineHeight: 22,
+    marginBottom: 6,
+  },
+  durationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  cardDuration: {
+    ...Typography.body2,
     color: colors.text.secondary,
-    lineHeight: 20,
-  },
-  favoriteButton: {
-    padding: 4,
-  },
-  contentMeta: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  contentType: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  contentTypeText: {
-    fontSize: 12,
-    color: colors.primary.main,
     marginLeft: 4,
-    fontWeight: '600',
-    textTransform: 'capitalize',
   },
-  contentDuration: {
-    fontSize: 12,
-    color: colors.text.secondary,
+  progressContainer: {
+    marginTop: 8,
+  },
+  progressBar: {
+    height: 4,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: colors.primary.main,
+    borderRadius: 2,
   },
 });
-

@@ -1,7 +1,7 @@
 // App.tsx
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { StatusBar } from 'expo-status-bar';
+import { StatusBar } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useFonts, Poppins_300Light, Poppins_400Regular, Poppins_500Medium, Poppins_600SemiBold, Poppins_700Bold } from '@expo-google-fonts/poppins';
 import AppNavigator from './src/navigation/AppNavigator';
@@ -27,7 +27,7 @@ export default function App() {
         <AuthProvider>
           <NavigationContainer>
             <AppNavigator />
-            <StatusBar style="light" backgroundColor="#F8F9FF" />
+            <StatusBar barStyle="dark-content" backgroundColor="#8B5CF6" />
           </NavigationContainer>
         </AuthProvider>
       </SafeAreaProvider>

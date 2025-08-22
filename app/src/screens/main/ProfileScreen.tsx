@@ -368,10 +368,9 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   headerTitle: {
-    ...Typography.h3,
-    fontSize: 32,
+    ...Typography.h4,
+    fontSize: 26,
     color: colors.darkGray,
-    fontWeight: '600',
   },
   optionsContainer: {
     paddingHorizontal: 24,

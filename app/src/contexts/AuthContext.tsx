@@ -66,6 +66,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
 interface AuthContextType {
   state: AuthState;
   signInWithGoogle: () => Promise<void>;
+  signIn: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -153,46 +154,66 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signInWithGoogle = async () => {
-    console.log('🚀 Starting Google OAuth flow...');
+    // DEV ONLY: bypass Google OAuth and set a demo user locally
+    console.log('🚀 DEV: Bypassing Google OAuth, setting demo user...');
     dispatch({ type: 'SET_LOADING', payload: true });
 
     try {
-      // Use expo-auth-session to get Google OAuth token
-      console.log('📱 Prompting Google OAuth...');
-      const result = await promptAsync();
+      const demoUser: User = {
+        id: 'demo-user',
+        email: 'demo@innerlight.com',
+        name: 'Demo User',
+        avatar: undefined,
+        streak: 0,
+        totalDaysCompleted: 0,
+        lastActive: new Date(),
+      };
 
-      if (result?.type === 'success') {
-        console.log('✅ Google OAuth successful, getting ID token...');
+      // Persist demo user locally and update state
+      await AsyncStorage.setItem('user', JSON.stringify(demoUser));
+      dispatch({ type: 'SET_USER', payload: demoUser });
 
-        // Get the ID token from the result
-        const { id_token } = result.params;
+      // Optionally set a placeholder token for apiService (dev)
+      const placeholderToken = 'demo-token';
+      await AsyncStorage.setItem('firebaseToken', placeholderToken);
+      apiService.setToken(placeholderToken);
 
-        if (!id_token) {
-          throw new Error('No ID token received from Google OAuth');
-        }
-
-        console.log('🔑 Got ID token from Google, signing in with Firebase...');
-
-        // Sign in with Firebase using the Google ID token
-        const firebaseUser = await signInWithGoogleCredential(id_token);
-        console.log('✅ Firebase Google Sign-In successful:', firebaseUser.email);
-
-        // The Firebase auth state listener will handle the rest
-        // No need to manually dispatch here as Firebase will trigger the listener
-
-      } else if (result?.type === 'cancel') {
-        console.log('❌ Google OAuth cancelled by user');
-        dispatch({ type: 'SET_LOADING', payload: false });
-      } else {
-        console.log('❌ Google OAuth failed:', result);
-        dispatch({ type: 'SET_LOADING', payload: false });
-        throw new Error('Google OAuth failed');
-      }
-
+      console.log('✅ DEV: demo user signed in');
     } catch (error) {
-      console.error('❌ Google Sign-In error:', error);
+      console.error('❌ DEV sign-in error:', error);
       dispatch({ type: 'SET_LOADING', payload: false });
       throw error;
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
+  };
+
+  // DEV helper: sign in with an email (demo account)
+  const signIn = async (email: string) => {
+    console.log(`🚀 DEV signIn called for ${email}`);
+    dispatch({ type: 'SET_LOADING', payload: true });
+    try {
+      const demoUser: User = {
+        id: 'demo-user',
+        email: email || 'demo@innerlight.com',
+        name: 'Demo User',
+        avatar: undefined,
+        streak: 0,
+        totalDaysCompleted: 0,
+        lastActive: new Date(),
+      };
+
+      await AsyncStorage.setItem('user', JSON.stringify(demoUser));
+      const placeholderToken = 'demo-token';
+      await AsyncStorage.setItem('firebaseToken', placeholderToken);
+      apiService.setToken(placeholderToken);
+      dispatch({ type: 'SET_USER', payload: demoUser });
+      console.log('✅ DEV signIn completed');
+    } catch (error) {
+      console.error('❌ DEV signIn error:', error);
+      throw error;
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
     }
   };
 
@@ -211,6 +232,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value = {
     state,
     signInWithGoogle,
+    signIn,
     signOut,
   };
 

@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Modal, Pressable } from 'react-native';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import Card from '../../components/common/Card';
@@ -13,6 +13,9 @@ const { width } = Dimensions.get('window');
 const HomeScreen = ({ navigation }: any) => {
   const { state } = useAuth();
   const user = state.user;
+
+  // UI state for tabs
+  const [activeTab, setActiveTab] = useState<'Intro' | 'Communication skills'>('Intro');
 
   // Sample program data based on the image
   const programModules = [
@@ -41,6 +44,57 @@ const HomeScreen = ({ navigation }: any) => {
       isActive: false
     }
   ];
+
+  // Example communication skills modules (replace with real data)
+  const communicationModules = [
+    {
+      id: 11,
+      title: 'Active Listening Basics',
+      type: 'Lesson',
+      duration: '6 min',
+      image: '',
+      isActive: false,
+    },
+    {
+      id: 12,
+      title: 'Assertive Responses Practice',
+      type: 'Challenge',
+      duration: '',
+      image: '',
+      isActive: false,
+    },
+  ];
+
+  const displayedModules = activeTab === 'Intro' ? programModules : communicationModules;
+
+  // Modal state for listing challenges
+  const [showChallengesModal, setShowChallengesModal] = useState(false);
+
+  // Sample list of all available challenges
+  const allChallenges = [
+    { id: 'c1', title: '30-minute Gratitude Walk' },
+    { id: 'c2', title: 'One Small Habit Change' },
+    { id: 'c3', title: 'Daily Journaling for 7 Days' },
+    { id: 'c4', title: 'Reach Out to a Friend' },
+  ];
+
+  // Hide parent tab bar while modal is visible
+  useEffect(() => {
+    const parent = navigation.getParent && navigation.getParent();
+    if (!parent) return;
+
+    // Hide tab bar when modal is open
+    if (showChallengesModal) {
+      parent.setOptions({ tabBarStyle: { display: 'none' } });
+    } else {
+      parent.setOptions({ tabBarStyle: undefined });
+    }
+
+    // cleanup: restore when component unmounts
+    return () => {
+      parent.setOptions({ tabBarStyle: undefined });
+    };
+  }, [showChallengesModal, navigation]);
 
   const ProgramModule = ({ module, index }: any) => (
     <Animated.View
@@ -92,11 +146,21 @@ const HomeScreen = ({ navigation }: any) => {
 
           {/* Program Tabs */}
           <View style={styles.tabsContainer}>
-            <TouchableOpacity style={[styles.tab, styles.activeTab]}>
-              <Text style={styles.activeTabText}>Intro</Text>
+            <TouchableOpacity
+              accessible
+              accessibilityRole="button"
+              onPress={() => setActiveTab('Intro')}
+              style={[styles.tab, activeTab === 'Intro' && styles.activeTab]}
+            >
+              <Text style={activeTab === 'Intro' ? styles.activeTabText : styles.tabText}>Intro</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.tab}>
-              <Text style={styles.tabText}>Communication skills</Text>
+            <TouchableOpacity
+              accessible
+              accessibilityRole="button"
+              onPress={() => setActiveTab('Communication skills')}
+              style={[styles.tab, activeTab === 'Communication skills' && styles.activeTab]}
+            >
+              <Text style={activeTab === 'Communication skills' ? styles.activeTabText : styles.tabText}>Communication skills</Text>
             </TouchableOpacity>
           </View>
 
@@ -122,7 +186,7 @@ const HomeScreen = ({ navigation }: any) => {
 
         {/* Program Modules */}
         <View style={styles.modulesContainer}>
-          {programModules.map((module, index) => (
+          {displayedModules.map((module, index) => (
             <ProgramModule key={module.id} module={module} index={index} />
           ))}
         </View>
@@ -144,7 +208,7 @@ const HomeScreen = ({ navigation }: any) => {
         >
           <View style={styles.challengesHeader}>
             <Text style={styles.challengesTitle}>Challenges</Text>
-            <TouchableOpacity style={styles.addButton}>
+            <TouchableOpacity style={styles.addButton} onPress={() => setShowChallengesModal(true)}>
               <Text style={styles.addButtonText}>+</Text>
             </TouchableOpacity>
           </View>
@@ -156,6 +220,33 @@ const HomeScreen = ({ navigation }: any) => {
         {/* Bottom padding for navigation */}
         <View style={styles.bottomPadding} />
       </ScrollView>
+
+      {/* Challenges Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showChallengesModal}
+        onRequestClose={() => setShowChallengesModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>All Challenges</Text>
+              <Pressable onPress={() => setShowChallengesModal(false)} style={styles.modalClose}>
+                <Text style={styles.modalCloseText}>✕</Text>
+              </Pressable>
+            </View>
+
+            <ScrollView>
+              {allChallenges.map((c) => (
+                <TouchableOpacity key={c.id} style={styles.challengeRow}>
+                  <Text style={styles.challengeText}>{c.title}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -181,10 +272,9 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   headerTitle: {
-    ...Typography.h3,
+    ...Typography.h2,
     fontSize: 28,
     color: '#2D3748',
-    fontWeight: '700',
   },
   addButton: {
     width: 32,
@@ -351,7 +441,7 @@ const styles = StyleSheet.create({
     ...Typography.h4,
     fontSize: 24,
     color: '#2D3748',
-    fontWeight: '700',
+    // fontWeight: '700',
   },
   challengesSubtitle: {
     ...Typography.body2,
@@ -362,6 +452,43 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 100,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#FFF',
+    padding: 20,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    height: Math.round(Dimensions.get('window').height * 0.75),
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  modalTitle: {
+    ...Typography.h4,
+    fontSize: 18,
+  },
+  modalClose: {
+    padding: 8,
+  },
+  modalCloseText: {
+    fontSize: 18,
+  },
+  challengeRow: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  challengeText: {
+    ...Typography.body2,
+    color: '#1F2937',
   },
 });
 

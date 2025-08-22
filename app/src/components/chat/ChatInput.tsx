@@ -4,6 +4,7 @@ import { View, TextInput, TouchableOpacity, StyleSheet, Keyboard } from 'react-n
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../utils/colors';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import { Typography } from '../../utils/typography';
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
@@ -88,10 +89,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: colors.background.primary,
-    borderTopWidth: 1,
-    borderTopColor: colors.border.light,
+    paddingVertical: 8,
+    backgroundColor: colors.background.card,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -102,7 +101,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border.light,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    minHeight: 48,
+    maxHeight: 100,
   },
   inputContainerFocused: {
     borderColor: colors.primary.main,
@@ -113,6 +112,7 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     maxHeight: 100,
     paddingVertical: 8,
+    fontFamily: Typography.input.fontFamily
   },
   sendButton: {
     width: 36,
@@ -121,6 +121,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 8,
+    borderColor: colors.primary.main,
   },
   sendButtonActive: {
     backgroundColor: colors.primary.main,

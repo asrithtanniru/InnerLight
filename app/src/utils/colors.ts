@@ -16,7 +16,7 @@ export const colors = {
   footerText: 'rgba(255, 255, 255, 0.7)',
   // Primary colors - soft blue palette
   primary: {
-    main: '#6B9EF5',        // Soft blue
+    main: '#8B5CF6',        // Soft blue
     light: '#A8C8F7',       // Light blue
     dark: '#4A7BC8',        // Darker blue
     background: '#F0F6FF',   // Very light blue background
