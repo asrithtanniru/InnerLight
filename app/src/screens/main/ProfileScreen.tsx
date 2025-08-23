@@ -24,7 +24,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Typography } from '../../utils/typography';
 import { useAuth } from '../../contexts/AuthContext';
-import { dummyData } from '../../services/dummyData';
 
 const { width, height } = Dimensions.get('window');
 
@@ -65,8 +64,8 @@ const ModalContent: React.FC<ModalContentProps> = ({ title, onClose, children })
 };
 
 export const ProfileScreen: React.FC = () => {
-  const { signOut } = useAuth();
-  const [user, setUser] = useState<any>(null);
+  const { signOut, state } = useAuth();
+  const user = state.user;
   const [stats, setStats] = useState<any>(null);
   const [notifications, setNotifications] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
@@ -76,8 +75,8 @@ export const ProfileScreen: React.FC = () => {
   const overlayAnimation = useSharedValue(0);
 
   useEffect(() => {
-    setUser(dummyData.currentUser);
-    setStats(dummyData.userStats);
+    // Keep some sample stats for now (could be replaced by real API)
+    setStats({ streak: 0, totalDaysCompleted: 0 });
   }, []);
 
   const openModal = (modalType: string) => {

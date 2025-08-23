@@ -1,20 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Google from 'expo-auth-session/providers/google';
-import * as WebBrowser from 'expo-web-browser';
-import { auth, signInWithGoogleCredential, signOutFirebase, onAuthStateChanged, FirebaseUser } from '../config/firebase';
 import { apiService } from '../services/api';
-
-// Complete the auth session
-WebBrowser.maybeCompleteAuthSession();
-
-// Debug environment variables
-console.log('🔍 Environment Variables Check:');
-console.log('EXPO_PUBLIC_FIREBASE_API_KEY:', process.env.EXPO_PUBLIC_FIREBASE_API_KEY ? 'SET' : 'NOT SET');
-console.log('EXPO_PUBLIC_FIREBASE_PROJECT_ID:', process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID);
-console.log('EXPO_PUBLIC_GOOGLE_CLIENT_ID:', process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID);
-console.log('EXPO_PUBLIC_API_URL:', process.env.EXPO_PUBLIC_API_URL);
-
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 interface User {
   id: string;
   email: string;
@@ -65,7 +52,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
 
 interface AuthContextType {
   state: AuthState;
-  signInWithGoogle: () => Promise<void>;
+  signInWithGoogle: () => Promise<User | void>;
   signIn: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -87,102 +74,90 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isAuthenticated: false,
   });
 
-  // Set up Google OAuth request
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    clientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID,
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-  });
-
+  // Restore stored user/token on mount
   useEffect(() => {
-    console.log('🔍 Setting up Firebase auth state listener...');
-
-    // Listen for Firebase auth state changes
-    const unsubscribe = onAuthStateChanged(async (firebaseUser) => {
-      console.log('🔥 Firebase auth state changed:', firebaseUser ? 'USER LOGGED IN' : 'NO USER');
-
-      if (firebaseUser) {
-        try {
-          // Convert Firebase user to our app's user format
-          const user: User = {
-            id: firebaseUser.uid,
-            email: firebaseUser.email || '',
-            name: firebaseUser.displayName || 'User',
-            avatar: firebaseUser.photoURL || undefined,
-            streak: 0,
-            totalDaysCompleted: 0,
-            lastActive: new Date(),
-          };
-
-          console.log('👤 Converted Firebase user to app user:', user);
-
-          // Get Firebase ID token for backend API calls
-          const idToken = await firebaseUser.getIdToken();
-          console.log('🔑 Got Firebase ID token for backend');
-
-          // Store user data and token
-          await AsyncStorage.setItem('user', JSON.stringify(user));
-          await AsyncStorage.setItem('firebaseToken', idToken);
-          apiService.setToken(idToken);
-
-          // Send user data to backend to sync
-          try {
-            await apiService.syncUserWithBackend(user, idToken);
-            console.log('✅ User synced with backend');
-          } catch (error) {
-            console.warn('⚠️ Failed to sync with backend:', error);
-            // Continue anyway - user is still authenticated
-          }
-
-          dispatch({ type: 'SET_USER', payload: user });
-        } catch (error) {
-          console.error('❌ Error processing Firebase user:', error);
+    (async () => {
+      try {
+        const raw = await AsyncStorage.getItem('user');
+        const token = await AsyncStorage.getItem('firebaseToken');
+        if (raw) {
+          const storedUser: User = JSON.parse(raw);
+          if (token) apiService.setToken(token);
+          dispatch({ type: 'SET_USER', payload: storedUser });
+          console.log('🔁 Restored user from storage');
+        } else {
           dispatch({ type: 'SET_LOADING', payload: false });
         }
-      } else {
-        // User signed out
-        console.log('👋 User signed out, clearing data...');
-        await AsyncStorage.removeItem('user');
-        await AsyncStorage.removeItem('firebaseToken');
-        apiService.clearToken();
-        dispatch({ type: 'SIGN_OUT' });
+      } catch (err) {
+        console.warn('⚠️ Failed to restore auth state:', err);
+        dispatch({ type: 'SET_LOADING', payload: false });
       }
-    });
-
-    // Cleanup subscription
-    return () => unsubscribe();
+    })();
   }, []);
 
-  const signInWithGoogle = async () => {
-    // DEV ONLY: bypass Google OAuth and set a demo user locally
-    console.log('🚀 DEV: Bypassing Google OAuth, setting demo user...');
+  // Google sign-in
+  const signInWithGoogle = async (): Promise<User | void> => {
     dispatch({ type: 'SET_LOADING', payload: true });
-
     try {
-      const demoUser: User = {
-        id: 'demo-user',
-        email: 'demo@innerlight.com',
-        name: 'Demo User',
-        avatar: undefined,
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      const userInfo: any = await GoogleSignin.signIn();
+
+      // Attempt to fetch idToken (may not be available on all setups)
+      let idToken: string | null = null;
+      try {
+        const tokens = await GoogleSignin.getTokens();
+        idToken = tokens.idToken ?? null;
+      } catch (tErr) {
+        console.warn('⚠️ Could not get tokens after signIn:', tErr);
+      }
+
+      const profile = (userInfo && (userInfo.user || userInfo)) || {};
+      const appUser: User = {
+        id: profile.id || profile.userId || profile.email || 'google-user',
+        email: profile.email || '',
+        name: profile.name || profile.displayName || 'User',
+        avatar: profile.photo || profile.photoURL || undefined,
         streak: 0,
         totalDaysCompleted: 0,
         lastActive: new Date(),
       };
 
-      // Persist demo user locally and update state
-      await AsyncStorage.setItem('user', JSON.stringify(demoUser));
-      dispatch({ type: 'SET_USER', payload: demoUser });
+      // Persist and set token for api calls
+      await AsyncStorage.setItem('user', JSON.stringify(appUser));
+      if (idToken) {
+        await AsyncStorage.setItem('firebaseToken', idToken);
+        apiService.setToken(idToken);
+      }
 
-      // Optionally set a placeholder token for apiService (dev)
-      const placeholderToken = 'demo-token';
-      await AsyncStorage.setItem('firebaseToken', placeholderToken);
-      apiService.setToken(placeholderToken);
+      dispatch({ type: 'SET_USER', payload: appUser });
+    } catch (err: any) {
+      // Helpful guidance for common native config errors
+      const message = String(err?.message || err);
+      if (message.includes('DEVELOPER_ERROR')) {
+        console.error('❌ Sign in error: DEVELOPER_ERROR — likely native config issue:', err);
+        throw new Error(
+          'DEVELOPER_ERROR: Native Google Sign-In configuration issue. See https://react-native-google-signin.github.io/docs/troubleshooting and ensure the correct webClientId / OAuth SHA keys are set in your Firebase/Google Cloud Console. Rebuild the app after updating credentials.'
+        );
+      }
 
-      console.log('✅ DEV: demo user signed in');
-    } catch (error) {
-      console.error('❌ DEV sign-in error:', error);
-      dispatch({ type: 'SET_LOADING', payload: false });
-      throw error;
+      if (err && err.code) {
+        switch (err.code) {
+          case statusCodes.SIGN_IN_CANCELLED:
+            console.warn('Sign in cancelled');
+            break;
+          case statusCodes.IN_PROGRESS:
+            console.warn('Sign in in progress');
+            break;
+          case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
+            console.warn('Play services not available');
+            break;
+          default:
+            console.error('❌ Sign in error:', err);
+        }
+      } else {
+        console.error('❌ Sign in error:', err);
+      }
+      throw err;
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
@@ -220,16 +195,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     console.log('🚪 Starting sign out process...');
     try {
-      await signOutFirebase();
-      // Firebase auth state listener will handle clearing the state
-      console.log('✅ Sign out successful');
+      try {
+        // Sign out from Google (if configured)
+        await GoogleSignin.signOut();
+      } catch (gErr) {
+        console.warn('⚠️ Google signOut failed or not configured:', gErr);
+      }
+
+      // Clear storage and api token
+      await AsyncStorage.removeItem('user');
+      await AsyncStorage.removeItem('firebaseToken');
+      apiService.clearToken();
+      dispatch({ type: 'SIGN_OUT' });
+      console.log('✅ Sign out completed locally');
     } catch (error) {
       console.error('❌ Sign out error:', error);
       throw error;
     }
   };
 
-  const value = {
+  const value: AuthContextType = {
     state,
     signInWithGoogle,
     signIn,
