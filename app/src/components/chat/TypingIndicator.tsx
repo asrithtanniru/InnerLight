@@ -10,6 +10,7 @@ import Animated, {
   withDelay,
 } from 'react-native-reanimated';
 import { colors } from '../../utils/colors';
+import { Typography } from '../../utils/typography';
 
 interface TypingIndicatorProps {
   isVisible: boolean;
@@ -62,7 +63,7 @@ export const TypingIndicator: React.FC<TypingIndicatorProps> = ({ isVisible }) =
   return (
     <View style={styles.container}>
       <View style={styles.bubble}>
-        <Text style={styles.label}>AI Coach is typing</Text>
+        <Text style={styles.label}>Emey is typing</Text>
         <View style={styles.dotsContainer}>
           <Animated.View style={[styles.dot, dot1Style]} />
           <Animated.View style={[styles.dot, dot2Style]} />
@@ -94,6 +95,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.text.secondary,
     marginRight: 8,
+    fontFamily: Typography.body1.fontFamily,
   },
   dotsContainer: {
     flexDirection: 'row',

@@ -6,7 +6,7 @@ import { Typography } from '../../utils/typography';
 import { ChatBubble } from '../../components/chat/ChatBubble';
 import { ChatInput } from '../../components/chat/ChatInput';
 import { TypingIndicator } from '../../components/chat/TypingIndicator';
-import { dummyData } from '../../services/dummyData';
+import { getGeminiResponse } from '../../utils/gemini';
 
 export const ChatScreen: React.FC = () => {
   const [messages, setMessages] = useState<any[]>([]);
@@ -18,18 +18,18 @@ export const ChatScreen: React.FC = () => {
     const initialMessages = [
       {
         id: '1',
-        content: "Go ahead - ask me anything 😊",
-        sender: 'ai',
-        timestamp: new Date(Date.now() - 86400000).toISOString(), // Yesterday
-        type: 'text',
-      },
-      {
-        id: '2',
-        content: "How have you been lately?",
+        content: "Hello! I'm Emey, your personal wellness companion. I'm here to listen and support you.",
         sender: 'ai',
         timestamp: new Date().toISOString(),
         type: 'text',
-      }
+      },
+      // {
+      //   id: '2',
+      //   content: "To start, perhaps you can tell me what's on your mind? Or we can try a quick mindfulness exercise.",
+      //   sender: 'ai',
+      //   timestamp: new Date().toISOString(),
+      //   type: 'text',
+      // }
     ];
 
     setMessages(initialMessages);
@@ -47,32 +47,23 @@ export const ChatScreen: React.FC = () => {
     setMessages(prev => [...prev, userMessage]);
     setIsTyping(true);
 
-    // Simulate AI response
-    setTimeout(() => {
+    try {
+      const aiReply = await getGeminiResponse(content);
+
       const aiResponse = {
         id: (Date.now() + 1).toString(),
-        content: generateAIResponse(content),
+        content: aiReply,
         sender: 'ai',
         timestamp: new Date().toISOString(),
         type: 'text',
       };
 
       setMessages(prev => [...prev, aiResponse]);
+    } catch (e) {
+      console.log(e);
+    } finally {
       setIsTyping(false);
-    }, 2000);
-  };
-
-  const generateAIResponse = (userMessage: string): string => {
-    const responses = [
-      "I understand how you're feeling. It's completely normal to experience these emotions. Let's work through this together.",
-      "That's a great insight! Recognizing these patterns is the first step toward positive change.",
-      "Thank you for sharing that with me. Your awareness of your thoughts and feelings shows real growth.",
-      "I hear you. These situations can be challenging. Let's explore some strategies that might help.",
-      "You're doing great by taking the time to reflect on this. What do you think might be a small first step you could take?",
-      "I'm here to listen and support you. How does that make you feel?",
-      "That sounds like a positive step forward. What would you like to focus on next?",
-    ];
-    return responses[Math.floor(Math.random() * responses.length)];
+    }
   };
 
   const formatMessageDate = (timestamp: string) => {
@@ -130,7 +121,7 @@ export const ChatScreen: React.FC = () => {
               style={styles.avatarImage}
             />
           </View>
-          <Text style={styles.headerTitle}>Kev AI</Text>
+          <Text style={styles.headerTitle}>Emey AI</Text>
         </View>
         <View style={styles.headerDivider} />
       </Animated.View>

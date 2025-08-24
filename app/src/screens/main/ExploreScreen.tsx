@@ -1,13 +1,31 @@
 // src/screens/main/ExploreScreen.tsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../utils/colors';
 import { Typography } from '../../utils/typography';
 import { AnimatedView } from '../../components/common/AnimatedView';
+import { ExerciseModal, Exercise } from '../../components/common/ExerciseModal';
+import { images } from '../../../src/utils/assets';
+import { useNavigation } from '@react-navigation/native';
 
 export const ExploreScreen: React.FC = () => {
+  const navigation = useNavigation();
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
+
+  useEffect(() => {
+    const parent = navigation.getParent();
+    if (!parent) return;
+
+    if (isModalVisible) {
+      parent.setOptions({ tabBarStyle: { display: 'none' } });
+    } else {
+      parent.setOptions({ tabBarStyle: undefined });
+    }
+  }, [isModalVisible, navigation]);
+
   // Mock data with web images
   const challenges = [
     {
@@ -71,73 +89,86 @@ export const ExploreScreen: React.FC = () => {
     }
   ];
 
-  const exercises = [
+  const exercises: Exercise[] = [
     {
       id: '1',
-      title: 'Breathing Exercise',
-      image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=400&fit=crop'
+      title: 'Meditation',
+      image: images.meditation,
+      duration: 60,
     },
     {
       id: '2',
-      title: 'Meditation',
-      image: 'https://images.unsplash.com/photo-1545389336-cf090694435e?w=400&h=400&fit=crop'
+      title: 'Stress Relief',
+      image: images.stressRelief,
+      duration: 60,
     },
     {
       id: '3',
-      title: 'Mindfulness',
-      image: 'https://images.unsplash.com/photo-1499209974431-9dddcece7f88?w=400&h=400&fit=crop'
+      title: 'Breathing Exercise',
+      image: images.breathingExercise,
+      duration: 60,
     },
+
     {
       id: '4',
-      title: 'Relaxation',
-      image: 'https://images.unsplash.com/photo-1506629905880-b2ce6d4d9dde?w=400&h=400&fit=crop'
+      title: 'Mindfulness',
+      image: images.mindfulness,
+      duration: 60,
     },
     {
       id: '5',
-      title: 'Stress Relief',
-      image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=400&fit=crop'
-    }
+      title: 'Relaxation',
+      image: images.relaxation,
+    },
+
+
   ];
 
-  const renderCard = ({ item, showProgress = false }: { item: any; showProgress?: boolean }) => (
-    <View style={styles.cardWrapper}>
-      <TouchableOpacity style={styles.card}>
-        <View style={styles.imageContainer}>
-          <Image source={{ uri: item.image }} style={styles.cardImage} />
-        </View>
-      </TouchableOpacity>
+  const handleExercisePress = (exercise: Exercise) => {
+    setSelectedExercise(exercise);
+    setModalVisible(true);
+  };
 
-      <View style={styles.cardInfo}>
-        <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
-
-        {item.duration && (
-          <View style={styles.durationContainer}>
-            <Ionicons name="time-outline" size={14} color={colors.text.secondary} />
-            <Text style={styles.cardDuration}>{item.duration}</Text>
+  const renderCard = ({ item, showProgress = false, onPress }: { item: any; showProgress?: boolean, onPress?: () => void }) => {
+    const imageSource = typeof item.image === 'string' ? { uri: item.image } : item.image;
+    return (
+      <View style={styles.cardWrapper}>
+        <TouchableOpacity style={styles.card} onPress={onPress}>
+          <View style={styles.imageContainer}>
+            <Image source={imageSource} style={styles.cardImage} />
           </View>
-        )}
+        </TouchableOpacity>
 
-        {showProgress && item.progress && (
-          <View style={styles.progressContainer}>
-            <View style={styles.progressBar}>
-              <View style={[styles.progressFill, { width: `${item.progress * 100}%` }]} />
+        <View style={styles.cardInfo}>
+          <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
+
+          {item.duration && typeof item.duration === 'string' && (
+            <View style={styles.durationContainer}>
+              <Ionicons name="time-outline" size={14} color={colors.text.secondary} />
+              <Text style={styles.cardDuration}>{item.duration}</Text>
             </View>
-          </View>
-        )}
+          )}
+
+          {showProgress && item.progress && (
+            <View style={styles.progressContainer}>
+              <View style={styles.progressBar}>
+                <View style={[styles.progressFill, { width: `${item.progress * 100}%` }]} />
+              </View>
+            </View>
+          )}
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header */}
         <AnimatedView animation="fadeIn" style={styles.header}>
           <Text style={styles.headerTitle}>Explore</Text>
           <Text style={styles.headerSubtitle}>Discover content to support your wellness journey</Text>
         </AnimatedView>
 
-        {/* Challenges Section */}
         <AnimatedView animation="slideUp" delay={200} style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Challenges</Text>
@@ -186,7 +217,7 @@ export const ExploreScreen: React.FC = () => {
 
           <FlatList
             data={exercises}
-            renderItem={({ item }) => renderCard({ item })}
+            renderItem={({ item }) => renderCard({ item, onPress: () => handleExercisePress(item) })}
             keyExtractor={(item) => item.id}
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -194,6 +225,11 @@ export const ExploreScreen: React.FC = () => {
           />
         </AnimatedView>
       </ScrollView>
+      <ExerciseModal
+        isVisible={isModalVisible}
+        onClose={() => setModalVisible(false)}
+        exercise={selectedExercise}
+      />
     </SafeAreaView>
   );
 };

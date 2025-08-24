@@ -6,6 +6,7 @@ import { useFonts, Poppins_300Light, Poppins_400Regular, Poppins_500Medium, Popp
 import AppNavigator from './src/navigation/AppNavigator';
 import { AuthProvider } from './src/contexts/AuthContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { configureGoogleSignIn } from './src/config/google';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 export default function App() {
@@ -18,10 +19,25 @@ export default function App() {
   });
 
   useEffect(() => {
-    GoogleSignin.configure({
-      webClientId: '361228792886-r9spd722ddgv4an05nugjg2c118tuu6r.apps.googleusercontent.com',
-      profileImageSize: 120,
-    });
+    const setupGoogleSignIn = async () => {
+      try {
+        GoogleSignin.configure({
+          webClientId: '361228792886-a1j7ib1dlgru6diov97nfu3od5h5h9ff.apps.googleusercontent.com',
+          offlineAccess: true,
+          forceCodeForRefreshToken: true,
+          profileImageSize: 120,
+        });
+        console.log('✅ Google Sign-In configured');
+
+        // Check if Play Services are available
+        await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+        console.log('✅ Play Services available');
+      } catch (error) {
+        console.error('❌ Google Sign-In setup error:', error);
+      }
+    };
+
+    setupGoogleSignIn();
   }, []);
 
   if (!fontsLoaded) {

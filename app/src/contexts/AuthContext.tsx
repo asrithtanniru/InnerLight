@@ -6,6 +6,9 @@ interface User {
   id: string;
   email: string;
   name: string;
+  photo?: string;
+  givenName?: string;
+  familyName?: string;
   avatar?: string;
   streak?: number;
   totalDaysCompleted?: number;
@@ -101,28 +104,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
       const userInfo: any = await GoogleSignin.signIn();
+      console.log('📱 Google Sign-In User Info:', JSON.stringify(userInfo, null, 2));
 
       // Attempt to fetch idToken (may not be available on all setups)
       let idToken: string | null = null;
       try {
         const tokens = await GoogleSignin.getTokens();
         idToken = tokens.idToken ?? null;
+        console.log('🔑 Google Tokens:', JSON.stringify(tokens, null, 2));
       } catch (tErr) {
         console.warn('⚠️ Could not get tokens after signIn:', tErr);
       }
 
-      const profile = (userInfo && (userInfo.user || userInfo)) || {};
+      const profile = userInfo?.user || {};
+      console.log('👤 User Profile:', JSON.stringify(profile, null, 2));
+
       const appUser: User = {
-        id: profile.id || profile.userId || profile.email || 'google-user',
+        id: profile.id || 'google-user',
         email: profile.email || '',
-        name: profile.name || profile.displayName || 'User',
-        avatar: profile.photo || profile.photoURL || undefined,
+        name: profile.name || 'User',
+        photo: profile.photo,
+        givenName: profile.givenName,
+        familyName: profile.familyName,
         streak: 0,
         totalDaysCompleted: 0,
         lastActive: new Date(),
-      };
-
-      // Persist and set token for api calls
+      };      // Persist and set token for api calls
       await AsyncStorage.setItem('user', JSON.stringify(appUser));
       if (idToken) {
         await AsyncStorage.setItem('firebaseToken', idToken);

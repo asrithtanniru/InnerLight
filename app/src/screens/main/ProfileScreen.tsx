@@ -42,26 +42,26 @@ const colors = {
 };
 
 interface ModalContentProps {
-  title: string;
+  title: React.ReactNode;
   onClose: () => void;
   children: React.ReactNode;
 }
 
-const ModalContent: React.FC<ModalContentProps> = ({ title, onClose, children }) => {
-  return (
-    <View style={styles.modalContainer}>
-      <View style={styles.modalHeader}>
+const ModalContent = ({ title, onClose, children }: ModalContentProps) => (
+  <View style={styles.modalContainer}>
+    <View style={styles.modalHeader}>
+      <View>
         <Text style={styles.modalTitle}>{title}</Text>
-        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-          <Ionicons name="close" size={24} color={colors.darkGray} />
-        </TouchableOpacity>
       </View>
-      <View style={styles.modalContent}>
-        {children}
-      </View>
+      <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+        <Ionicons name="close" size={24} color={colors.darkGray} />
+      </TouchableOpacity>
     </View>
-  );
-};
+    <View style={styles.modalContent}>
+      {children}
+    </View>
+  </View>
+);
 
 export const ProfileScreen: React.FC = () => {
   const { signOut, state } = useAuth();

@@ -3,22 +3,32 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 // Configure Google Sign-In
 export const configureGoogleSignIn = () => {
   GoogleSignin.configure({
-    // The webClientId is required for Google Sign-In
-    // Replace this with your actual web client ID from the Google Cloud Console
-    webClientId: 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com',
-    // Optional: If you're using server-side authentication, you can set the following
+    webClientId: '361228792886-a1j7ib1dlgru6diov97nfu3od5h5h9ff.apps.googleusercontent.com',
+    // androidClientId: '361228792886-op6s9q0llujv1qi2572qqeav14ji6qiu.apps.googleusercontent.com',
     // offlineAccess: true,
-    // forceCodeForRefreshToken: true,
-    // iosClientId: 'YOUR_IOS_CLIENT_ID.apps.googleusercontent.com',
+    profileImageSize: 120,
   });
 };
 
 // Initialize Google Sign-In
 export const initGoogleSignIn = async () => {
   try {
+    // First, try to sign out to clear any existing state
+    try {
+      await GoogleSignin.signOut();
+      console.log('Cleared previous sign-in state');
+    } catch (e) {
+      console.log('No previous sign-in state to clear');
+    }
+
+    // Check Play Services
     await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+    console.log('Play Services check passed');
+
+    // Try silent sign in
     await GoogleSignin.signInSilently();
     const currentUser = await GoogleSignin.getCurrentUser();
+    console.log('Got current user:', currentUser?.user);
     return currentUser;
   } catch (error) {
     console.log('Google Sign-In initialization error:', error);

@@ -86,9 +86,9 @@ const OnboardingIntroScreen: React.FC<OnboardingIntroScreenProps> = ({
         </Animated.View>
 
         <View style={styles.textContainer}>
-          <Text style={styles.title}>Hello, I'm Kev</Text>
+          <Text style={styles.title}>Hello, I'm Emey</Text>
           <Text style={styles.subtitle}>
-            I'm an AI coach trained in psychology.{'\n'}
+            I'm an Emey trained in psychology.{'\n'}
             I will help you along your journey.
           </Text>
         </View>

@@ -109,7 +109,7 @@ const TabNavigator = () => {
       <Tab.Screen
         name="Chat"
         component={ChatScreen}
-        options={{ tabBarLabel: 'AI Coach' }}
+        options={{ tabBarLabel: 'Emey' }}
       />
       <Tab.Screen
         name="Explore"
