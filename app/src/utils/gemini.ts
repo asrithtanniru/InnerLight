@@ -28,3 +28,7 @@ export const getGeminiResponse = async (userMessage: string) => {
     return "Hmm, something went wrong. Let's try again.";
   }
 };
+
+
+
+// A quiz that looks up random GitHub repos, displays some of the code, and you have to match it to 1 of 4 project descriptions.

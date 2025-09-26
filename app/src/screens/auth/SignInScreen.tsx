@@ -27,7 +27,7 @@ const SignInScreen: React.FC<SignInScreenProps> = ({ navigation }) => {
   const handleExploreApp = async (): Promise<void> => {
     setIsLoading(true);
     try {
-      navigation.navigate('OnboardingIntro');
+      navigation.navigate('OnboardingFlow');
     } catch (error) {
       Alert.alert('Error', 'Failed to explore app. Please try again.', [
         { text: 'OK' }

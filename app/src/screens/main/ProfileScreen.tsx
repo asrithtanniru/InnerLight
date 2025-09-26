@@ -302,12 +302,6 @@ export const ProfileScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Start Free Trial Button */}
-        <View style={styles.trialButtonContainer}>
-          <TouchableOpacity style={styles.trialButton}>
-            <Text style={styles.trialButtonText}>Start Free trial</Text>
-          </TouchableOpacity>
-        </View>
 
         {/* Sign Out Button */}
         <View style={styles.signOutContainer}>
