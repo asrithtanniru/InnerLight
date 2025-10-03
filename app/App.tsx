@@ -1,12 +1,13 @@
-import React, { useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { StatusBar, Platform } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { useFonts, Poppins_300Light, Poppins_400Regular, Poppins_500Medium, Poppins_600SemiBold, Poppins_700Bold } from '@expo-google-fonts/poppins';
-import AppNavigator from './src/navigation/AppNavigator';
-import { AuthProvider } from './src/contexts/AuthContext';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import React, { useEffect } from 'react'
+import { NavigationContainer } from '@react-navigation/native'
+import { StatusBar, Platform } from 'react-native'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { useFonts, Poppins_300Light, Poppins_400Regular, Poppins_500Medium, Poppins_600SemiBold, Poppins_700Bold } from '@expo-google-fonts/poppins'
+import AppNavigator from './src/navigation/AppNavigator'
+import { AuthProvider } from './src/contexts/AuthContext'
+import { ProgramProvider } from './src/contexts/ProgramContext'
+import { SafeAreaProvider } from 'react-native-safe-area-context'
+import { GoogleSignin } from '@react-native-google-signin/google-signin'
 // import * as Notifications from 'expo-notifications';
 // import * as Device from 'expo-device';
 
@@ -17,7 +18,7 @@ export default function App() {
     Poppins_500Medium,
     Poppins_600SemiBold,
     Poppins_700Bold,
-  });
+  })
 
   useEffect(() => {
     const setupGoogleSignIn = async () => {
@@ -27,17 +28,17 @@ export default function App() {
           offlineAccess: true,
           forceCodeForRefreshToken: true,
           profileImageSize: 120,
-        });
-        console.log('Google Sign-In configured');
+        })
+        console.log('Google Sign-In configured')
 
-        await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-        console.log('Play Services available');
+        await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true })
+        console.log('Play Services available')
       } catch (error) {
-        console.error('Google Sign-In setup error:', error);
+        console.error('Google Sign-In setup error:', error)
       }
-    };
+    }
 
-    setupGoogleSignIn();
+    setupGoogleSignIn()
 
     // const registerForPushNotificationsAsync = async () => {
     //   let token;
@@ -75,22 +76,24 @@ export default function App() {
     // };
 
     // registerForPushNotificationsAsync();
-  }, []);
+  }, [])
 
   if (!fontsLoaded) {
-    return null;
+    return null
   }
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <AuthProvider>
-          <NavigationContainer>
-            <AppNavigator />
-            <StatusBar barStyle="dark-content" backgroundColor="#8B5CF6" />
-          </NavigationContainer>
+          <ProgramProvider>
+            <NavigationContainer>
+              <AppNavigator />
+              <StatusBar barStyle="dark-content" backgroundColor="#8B5CF6" />
+            </NavigationContainer>
+          </ProgramProvider>
         </AuthProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
-  );
+  )
 }

@@ -1,220 +1,202 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Modal, Pressable } from 'react-native';
-import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
-import Card from '../../components/common/Card';
-import Button from '../../components/common/Button';
-import { Typography } from '../../utils/typography';
-import { useAuth } from '../../contexts/AuthContext';
-import { dummyPrograms } from '../../services/dummyData';
+import React, { useState, useEffect } from 'react'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Modal, Pressable, Image } from 'react-native'
+import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated'
+import { LinearGradient } from 'expo-linear-gradient'
+import { useFocusEffect } from '@react-navigation/native'
+import Card from '../../components/common/Card'
+import Button from '../../components/common/Button'
+import { Typography } from '../../utils/typography'
+import { useAuth } from '../../contexts/AuthContext'
+import { useProgramContext } from '../../contexts/ProgramContext'
+import { ProgramProgress, Program, Challenge } from '../../types/program-types'
+import { ProgramCard } from '../../components/program/ProgramCard'
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get('window')
 
 const HomeScreen = ({ navigation }: any) => {
-  const { state } = useAuth();
-  const user = state.user;
+  const { state } = useAuth()
+  const user = state.user
+  const { enrolledPrograms, programsMap, challenges, isLoading, refreshPrograms } = useProgramContext()
 
   // UI state for tabs
-  const [activeTab, setActiveTab] = useState<'Intro' | 'Communication skills'>('Intro');
+  const [activeTab, setActiveTab] = useState<string>('')
 
-  // Sample program data based on the image
-  const programModules = [
-    {
-      id: 1,
-      title: "Welcome, It's Time to Start FACING IT",
-      type: "Lesson",
-      duration: "4 min",
-      image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      isActive: true
-    },
-    {
-      id: 2,
-      title: "Imagine Your Ideal Life",
-      type: "Audio",
-      duration: "5 min",
-      image: "https://images.unsplash.com/photo-1519904981063-b0cf448d479e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      isActive: false
-    },
-    {
-      id: 3,
-      title: "Take a Step Towards Your Ideal Life",
-      type: "Challenge",
-      duration: "",
-      image: "https://images.unsplash.com/photo-1518837695005-2083093ee35b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      isActive: false
+  // Set initial active tab when enrolled programs load
+  useEffect(() => {
+    if (enrolledPrograms.length > 0 && !activeTab) {
+      setActiveTab(enrolledPrograms[0].programId)
     }
-  ];
+  }, [enrolledPrograms, activeTab])
+  const [showChallengesModal, setShowChallengesModal] = useState(false)
 
-  // Example communication skills modules (replace with real data)
-  const communicationModules = [
-    {
-      id: 11,
-      title: 'Active Listening Basics',
-      type: 'Lesson',
-      duration: '6 min',
-      image: '',
-      isActive: false,
-    },
-    {
-      id: 12,
-      title: 'Assertive Responses Practice',
-      type: 'Challenge',
-      duration: '',
-      image: '',
-      isActive: false,
-    },
-  ];
+  // Refresh data when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      refreshPrograms()
+    }, [])
+  )
 
-  const displayedModules = activeTab === 'Intro' ? programModules : communicationModules;
-
-  // Modal state for listing challenges
-  const [showChallengesModal, setShowChallengesModal] = useState(false);
-
-  // Sample list of all available challenges
-  const allChallenges = [
-    { id: 'c1', title: '30-minute Gratitude Walk' },
-    { id: 'c2', title: 'One Small Habit Change' },
-    { id: 'c3', title: 'Daily Journaling for 7 Days' },
-    { id: 'c4', title: 'Reach Out to a Friend' },
-  ];
+  const handleProgramPress = (programId: string) => {
+    navigation.navigate('ProgramDetail', {
+      programId,
+      source: 'home',
+    })
+  }
 
   // Hide parent tab bar while modal is visible
   useEffect(() => {
-    const parent = navigation.getParent && navigation.getParent();
-    if (!parent) return;
+    const parent = navigation.getParent && navigation.getParent()
+    if (!parent) return
 
     // Hide tab bar when modal is open
     if (showChallengesModal) {
-      parent.setOptions({ tabBarStyle: { display: 'none' } });
+      parent.setOptions({ tabBarStyle: { display: 'none' } })
     } else {
-      parent.setOptions({ tabBarStyle: undefined });
+      parent.setOptions({ tabBarStyle: undefined })
     }
 
     // cleanup: restore when component unmounts
     return () => {
-      parent.setOptions({ tabBarStyle: undefined });
-    };
-  }, [showChallengesModal, navigation]);
-
-  const ProgramModule = ({ module, index }: any) => (
-    <Animated.View
-      entering={FadeInDown.delay(300 + index * 100).springify()}
-      style={styles.moduleContainer}
-    >
-      <TouchableOpacity style={styles.moduleCard}>
-        <View style={styles.moduleImageContainer}>
-          <View style={[styles.moduleImage, { backgroundColor: getModuleColor(index) }]}>
-            <Text style={styles.moduleImageText}>🎯</Text>
-          </View>
-        </View>
-        <View style={styles.moduleContent}>
-          <Text style={styles.moduleTitle}>{module.title}</Text>
-          <View style={styles.moduleInfo}>
-            <View style={styles.moduleTypeContainer}>
-              <Text style={styles.moduleType}>{module.type}</Text>
-            </View>
-            {module.duration && (
-              <View style={styles.moduleDuration}>
-                <Text style={styles.moduleDurationText}>⏱ {module.duration}</Text>
-              </View>
-            )}
-          </View>
-        </View>
-      </TouchableOpacity>
-    </Animated.View>
-  );
-
-  const getModuleColor = (index: number) => {
-    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57'];
-    return colors[index % colors.length];
-  };
+      parent.setOptions({ tabBarStyle: undefined })
+    }
+  }, [showChallengesModal, navigation])
 
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <Animated.View
-          entering={FadeInDown.delay(200).springify()}
-          style={styles.header}
-        >
+        <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.header}>
           <View style={styles.headerTop}>
             <Text style={styles.headerTitle}>My Programs</Text>
-            <TouchableOpacity style={styles.addButton}>
+            <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate('Explore')}>
               <Text style={styles.addButtonText}>+</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Program Tabs */}
-          <View style={styles.tabsContainer}>
-            <TouchableOpacity
-              accessible
-              accessibilityRole="button"
-              onPress={() => setActiveTab('Intro')}
-              style={[styles.tab, activeTab === 'Intro' && styles.activeTab]}
-            >
-              <Text style={activeTab === 'Intro' ? styles.activeTabText : styles.tabText}>Intro</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              accessible
-              accessibilityRole="button"
-              onPress={() => setActiveTab('Communication skills')}
-              style={[styles.tab, activeTab === 'Communication skills' && styles.activeTab]}
-            >
-              <Text style={activeTab === 'Communication skills' ? styles.activeTabText : styles.tabText}>Communication skills</Text>
-            </TouchableOpacity>
-          </View>
+          {/* Program Tabs - Show enrolled programs */}
+          {enrolledPrograms.length > 0 && (
+            <View style={styles.tabsContainer}>
+              {enrolledPrograms.map((progress, index) => {
+                const program = programsMap[progress.programId]
+                if (!program) return null
 
-          {/* Progress Indicators */}
-          <View style={styles.progressContainer}>
-            <View style={[styles.progressDot, styles.activeDot]}>
-              <Text style={styles.progressDotText}>1</Text>
+                const isActive = activeTab === program.id
+                return (
+                  <TouchableOpacity key={program.id} accessible accessibilityRole="button" onPress={() => setActiveTab(program.id)} style={[styles.tab, isActive && styles.activeTab]}>
+                    <Text style={isActive ? styles.activeTabText : styles.tabText}>{program.title}</Text>
+                  </TouchableOpacity>
+                )
+              })}
             </View>
-            <View style={styles.progressLine} />
-            <View style={styles.progressDot}>
-              <Text style={styles.progressDotText}>2</Text>
-            </View>
-            <View style={styles.progressLine} />
-            <View style={styles.progressDot}>
-              <Text style={styles.progressDotText}>3</Text>
-            </View>
-            <View style={styles.progressLine} />
-            <View style={styles.progressDot}>
-              <Text style={styles.progressDotText}>4</Text>
-            </View>
-          </View>
+          )}
+
+          {/* Progress Indicators - Show progress for active program */}
+          {(() => {
+            const activeProgram = enrolledPrograms.find((p) => p.programId === activeTab)
+            const currentProgram = activeProgram ? programsMap[activeProgram.programId] : null
+
+            if (!currentProgram || !activeProgram) return null
+
+            const totalModules = currentProgram.modules.length
+            const completedModules = Math.floor((activeProgram.progressPercentage / 100) * totalModules)
+
+            return (
+              <View style={styles.progressContainer}>
+                {Array.from({ length: Math.min(totalModules, 5) }, (_, index) => (
+                  <React.Fragment key={index}>
+                    <View style={[styles.progressDot, index < completedModules && styles.activeDot]}>
+                      <Text style={[styles.progressDotText, index < completedModules && styles.activeDotText]}>{index + 1}</Text>
+                    </View>
+                    {index < Math.min(totalModules, 5) - 1 && <View style={styles.progressLine} />}
+                  </React.Fragment>
+                ))}
+              </View>
+            )
+          })()}
         </Animated.View>
 
-        {/* Program Modules */}
-        <View style={styles.modulesContainer}>
-          {displayedModules.map((module, index) => (
-            <ProgramModule key={module.id} module={module} index={index} />
-          ))}
-        </View>
+        {/* Program Content */}
+        {enrolledPrograms.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>No enrolled programs yet</Text>
+            <TouchableOpacity style={styles.exploreButton} onPress={() => navigation.navigate('Explore')}>
+              <Text style={styles.exploreButtonText}>Explore Programs</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={styles.programContentContainer}>
+            {(() => {
+              const activeProgram = enrolledPrograms.find((p) => p.programId === activeTab)
+              const currentProgram = activeProgram ? programsMap[activeProgram.programId] : null
+
+              if (!currentProgram) return null
+
+              return (
+                <View style={styles.lessonsContainer}>
+                  {currentProgram.modules.slice(0, 2).map((module, moduleIndex) =>
+                    module.lessons.slice(0, 2).map((lesson, lessonIndex) => (
+                      <TouchableOpacity
+                        key={`${module.id}-${lesson.id}`}
+                        style={styles.lessonCard}
+                        onPress={() => {
+                          navigation.navigate('LessonSlide', {
+                            programId: currentProgram.id,
+                            moduleId: module.id,
+                            lessonId: lesson.id,
+                            slideIndex: 0,
+                          })
+                        }}
+                      >
+                        <View style={styles.lessonImageContainer}>
+                          <Image source={{ uri: lesson.image || currentProgram.image }} style={styles.lessonImage} />
+                        </View>
+                        <View style={styles.lessonContent}>
+                          <Text style={styles.lessonTitle}>{lesson.title}</Text>
+                          <View style={styles.lessonTypeContainer}>
+                            <Text style={styles.lessonType}>📖 Lesson</Text>
+                          </View>
+                        </View>
+                        <View style={styles.lessonStatus}>
+                          <View style={styles.checkCircle}>
+                            <Text style={styles.checkMark}>✓</Text>
+                          </View>
+                        </View>
+                      </TouchableOpacity>
+                    ))
+                  )}
+                </View>
+              )
+            })()}
+          </View>
+        )}
 
         {/* Full Program Button */}
-        <Animated.View
-          entering={FadeInDown.delay(800).springify()}
-          style={styles.fullProgramContainer}
-        >
-          <TouchableOpacity style={styles.fullProgramButton}>
+        <Animated.View entering={FadeInDown.delay(800).springify()} style={styles.fullProgramContainer}>
+          <TouchableOpacity
+            style={styles.fullProgramButton}
+            onPress={() => {
+              const activeProgram = enrolledPrograms.find((p) => p.programId === activeTab)
+              if (activeProgram) {
+                navigation.navigate('ProgramDetail', {
+                  programId: activeProgram.programId,
+                  source: 'home',
+                })
+              }
+            }}
+          >
             <Text style={styles.fullProgramText}>≡ Full program</Text>
           </TouchableOpacity>
         </Animated.View>
 
         {/* Challenges Section */}
-        <Animated.View
-          entering={FadeInDown.delay(1000).springify()}
-          style={styles.challengesSection}
-        >
+        <Animated.View entering={FadeInDown.delay(1000).springify()} style={styles.challengesSection}>
           <View style={styles.challengesHeader}>
             <Text style={styles.challengesTitle}>Challenges</Text>
             <TouchableOpacity style={styles.addButton} onPress={() => setShowChallengesModal(true)}>
               <Text style={styles.addButtonText}>+</Text>
             </TouchableOpacity>
           </View>
-          <Text style={styles.challengesSubtitle}>
-            Take a challenge to get closer{'\n'}to your better self
-          </Text>
+          <Text style={styles.challengesSubtitle}>Take a challenge to get closer{'\n'}to your better self</Text>
         </Animated.View>
 
         {/* Bottom padding for navigation */}
@@ -222,12 +204,7 @@ const HomeScreen = ({ navigation }: any) => {
       </ScrollView>
 
       {/* Challenges Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={showChallengesModal}
-        onRequestClose={() => setShowChallengesModal(false)}
-      >
+      <Modal animationType="slide" transparent={true} visible={showChallengesModal} onRequestClose={() => setShowChallengesModal(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
@@ -238,7 +215,7 @@ const HomeScreen = ({ navigation }: any) => {
             </View>
 
             <ScrollView>
-              {allChallenges.map((c) => (
+              {challenges.map((c) => (
                 <TouchableOpacity key={c.id} style={styles.challengeRow}>
                   <Text style={styles.challengeText}>{c.title}</Text>
                 </TouchableOpacity>
@@ -248,8 +225,8 @@ const HomeScreen = ({ navigation }: any) => {
         </View>
       </Modal>
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -332,9 +309,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#8B5CF6',
   },
   progressDotText: {
-    color: '#FFFFFF',
+    color: '#A0AEC0',
     fontSize: 14,
     fontWeight: '600',
+  },
+  activeDotText: {
+    color: '#FFFFFF',
   },
   progressLine: {
     width: 24,
@@ -490,6 +470,112 @@ const styles = StyleSheet.create({
     ...Typography.body2,
     color: '#1F2937',
   },
-});
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  emptyStateText: {
+    ...Typography.body1,
+    color: '#718096',
+    marginBottom: 16,
+  },
+  exploreButton: {
+    backgroundColor: '#8B5CF6',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  exploreButtonText: {
+    ...Typography.button,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  programCardContainer: {
+    marginRight: 16,
+  },
+  programContentContainer: {
+    paddingHorizontal: 24,
+    paddingTop: 20,
+  },
+  lessonsContainer: {
+    gap: 16,
+  },
+  lessonCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  lessonImageContainer: {
+    marginRight: 16,
+  },
+  lessonImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 12,
+    resizeMode: 'cover',
+  },
+  lessonContent: {
+    flex: 1,
+  },
+  lessonTitle: {
+    ...Typography.h6,
+    fontSize: 16,
+    color: '#2D3748',
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  lessonTypeContainer: {
+    backgroundColor: '#FFF3E0',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  lessonType: {
+    ...Typography.caption,
+    color: '#FF8A65',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  lessonStatus: {
+    marginLeft: 16,
+  },
+  checkCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#10B981',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkMark: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  enrolledProgramsContainer: {
+    marginBottom: 20,
+  },
+  enrolledProgramsTitle: {
+    ...Typography.h5,
+    fontSize: 18,
+    color: '#2D3748',
+    marginBottom: 12,
+  },
+  enrolledProgramsScrollContainer: {
+    paddingRight: 24,
+  },
+  enrolledProgramCard: {
+    marginRight: 16,
+    width: 280,
+  },
+})
 
-export default HomeScreen;
+export default HomeScreen

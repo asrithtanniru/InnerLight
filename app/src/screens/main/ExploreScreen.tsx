@@ -1,94 +1,60 @@
 // src/screens/main/ExploreScreen.tsx
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, Image } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../../utils/colors';
-import { Typography } from '../../utils/typography';
-import { AnimatedView } from '../../components/common/AnimatedView';
-import { ExerciseModal, Exercise } from '../../components/common/ExerciseModal';
-import { images } from '../../../src/utils/assets';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState, useEffect } from 'react'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, Image } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { Ionicons } from '@expo/vector-icons'
+import { colors } from '../../utils/colors'
+import { Typography } from '../../utils/typography'
+import { AnimatedView } from '../../components/common/AnimatedView'
+import { ExerciseModal, Exercise } from '../../components/common/ExerciseModal'
+import { images } from '../../../src/utils/assets'
+import { useNavigation } from '@react-navigation/native'
+import { programService } from '../../services/programService'
+import { progressService } from '../../services/progressService'
+import { Program, Challenge, ProgramProgress } from '../../types/program-types'
+import { ProgramCard } from '../../components/program/ProgramCard'
 
 export const ExploreScreen: React.FC = () => {
-  const navigation = useNavigation();
-  const [isModalVisible, setModalVisible] = useState(false);
-  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
+  const navigation = useNavigation<any>()
+  const [isModalVisible, setModalVisible] = useState(false)
+  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null)
+  const [programs, setPrograms] = useState<Program[]>([])
+  const [challenges, setChallenges] = useState<Challenge[]>([])
+  const [programProgresses, setProgramProgresses] = useState<{ [key: string]: ProgramProgress }>({})
 
   useEffect(() => {
-    const parent = navigation.getParent();
-    if (!parent) return;
+    loadData()
+  }, [])
+
+  const loadData = async () => {
+    // Load programs and challenges
+    const allPrograms = programService.getAllPrograms()
+    const allChallenges = programService.getAllChallenges()
+
+    setPrograms(allPrograms)
+    setChallenges(allChallenges)
+
+    // Load program progresses
+    const enrolledPrograms = await progressService.getEnrolledPrograms()
+    const progressMap: { [key: string]: ProgramProgress } = {}
+    enrolledPrograms.forEach((progress) => {
+      progressMap[progress.programId] = progress
+    })
+    setProgramProgresses(progressMap)
+  }
+
+  useEffect(() => {
+    const parent = navigation.getParent()
+    if (!parent) return
 
     if (isModalVisible) {
-      parent.setOptions({ tabBarStyle: { display: 'none' } });
+      parent.setOptions({ tabBarStyle: { display: 'none' } })
     } else {
-      parent.setOptions({ tabBarStyle: undefined });
+      parent.setOptions({ tabBarStyle: undefined })
     }
-  }, [isModalVisible, navigation]);
+  }, [isModalVisible, navigation])
 
   // Mock data with web images
-  const challenges = [
-    {
-      id: '1',
-      title: 'Talk to Someone New Every Day',
-      duration: '7 days',
-      image: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400&h=400&fit=crop'
-    },
-    {
-      id: '2',
-      title: 'Speak with Confidence',
-      duration: '17 days',
-      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop'
-    },
-    {
-      id: '3',
-      title: 'Make New Friends',
-      duration: '14 days',
-      image: 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=400&h=400&fit=crop'
-    },
-    {
-      id: '4',
-      title: 'Public Speaking',
-      duration: '21 days',
-      image: 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=400&h=400&fit=crop'
-    },
-    {
-      id: '5',
-      title: 'Social Anxiety',
-      duration: '30 days',
-      image: 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?w=400&h=400&fit=crop'
-    }
-  ];
-
-  const programs = [
-    {
-      id: '1',
-      title: 'Intro',
-      progress: 0.7,
-      image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=400&fit=crop'
-    },
-    {
-      id: '2',
-      title: 'Relationships with Colleagues',
-      image: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=400&h=400&fit=crop'
-    },
-    {
-      id: '3',
-      title: 'Communication Skills',
-      image: 'https://images.unsplash.com/photo-1556761175-b413da4baf72?w=400&h=400&fit=crop'
-    },
-    {
-      id: '4',
-      title: 'Leadership Development',
-      image: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=400&h=400&fit=crop'
-    },
-    {
-      id: '5',
-      title: 'Team Building',
-      image: 'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=400&h=400&fit=crop'
-    }
-  ];
-
   const exercises: Exercise[] = [
     {
       id: '1',
@@ -108,7 +74,6 @@ export const ExploreScreen: React.FC = () => {
       image: images.breathingExercise,
       duration: 60,
     },
-
     {
       id: '4',
       title: 'Mindfulness',
@@ -119,18 +84,34 @@ export const ExploreScreen: React.FC = () => {
       id: '5',
       title: 'Relaxation',
       image: images.relaxation,
+      duration: 60,
     },
-
-
-  ];
+  ]
 
   const handleExercisePress = (exercise: Exercise) => {
-    setSelectedExercise(exercise);
-    setModalVisible(true);
-  };
+    setSelectedExercise(exercise)
+    setModalVisible(true)
+  }
 
-  const renderCard = ({ item, showProgress = false, onPress }: { item: any; showProgress?: boolean, onPress?: () => void }) => {
-    const imageSource = typeof item.image === 'string' ? { uri: item.image } : item.image;
+  const handleProgramPress = (program: Program) => {
+    navigation.navigate('ProgramDetail', {
+      programId: program.id,
+      source: 'explore',
+    })
+  }
+
+  const renderProgramCard = ({ item }: { item: Program }) => (
+    <ProgramCard
+      program={item}
+      onPress={() => handleProgramPress(item)}
+      showProgress={!!programProgresses[item.id]}
+      progressPercentage={programProgresses[item.id]?.progressPercentage || 0}
+      isEnrolled={!!programProgresses[item.id]}
+    />
+  )
+
+  const renderCard = ({ item, onPress }: { item: any; onPress?: () => void }) => {
+    const imageSource = typeof item.image === 'string' ? { uri: item.image } : item.image
     return (
       <View style={styles.cardWrapper}>
         <TouchableOpacity style={styles.card} onPress={onPress}>
@@ -140,7 +121,9 @@ export const ExploreScreen: React.FC = () => {
         </TouchableOpacity>
 
         <View style={styles.cardInfo}>
-          <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
+          <Text style={styles.cardTitle} numberOfLines={2}>
+            {item.title}
+          </Text>
 
           {item.duration && typeof item.duration === 'string' && (
             <View style={styles.durationContainer}>
@@ -148,18 +131,10 @@ export const ExploreScreen: React.FC = () => {
               <Text style={styles.cardDuration}>{item.duration}</Text>
             </View>
           )}
-
-          {showProgress && item.progress && (
-            <View style={styles.progressContainer}>
-              <View style={styles.progressBar}>
-                <View style={[styles.progressFill, { width: `${item.progress * 100}%` }]} />
-              </View>
-            </View>
-          )}
         </View>
       </View>
-    );
-  };
+    )
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -196,14 +171,7 @@ export const ExploreScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
 
-          <FlatList
-            data={programs}
-            renderItem={({ item }) => renderCard({ item, showProgress: true })}
-            keyExtractor={(item) => item.id}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.horizontalList}
-          />
+          <FlatList data={programs} renderItem={renderProgramCard} keyExtractor={(item) => item.id} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList} />
         </AnimatedView>
 
         {/* Exercises Section */}
@@ -225,14 +193,10 @@ export const ExploreScreen: React.FC = () => {
           />
         </AnimatedView>
       </ScrollView>
-      <ExerciseModal
-        isVisible={isModalVisible}
-        onClose={() => setModalVisible(false)}
-        exercise={selectedExercise}
-      />
+      <ExerciseModal isVisible={isModalVisible} onClose={() => setModalVisible(false)} exercise={selectedExercise} />
     </SafeAreaView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -332,4 +296,4 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary.main,
     borderRadius: 2,
   },
-});
+})
