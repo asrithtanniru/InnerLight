@@ -1,135 +1,115 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  StatusBar,
-  Dimensions,
-  Alert,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
-import { Typography } from '../../utils/typography';
-import { useAuth } from '../../contexts/AuthContext';
+import React, { useState } from 'react'
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, StatusBar, Dimensions } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated'
+import { Typography } from '../../utils/typography'
+import { useAuth } from '../../contexts/AuthContext'
+import { useCustomAlert } from '../../hooks/useCustomAlert'
+import CustomAlert from '../../components/common/CustomAlert'
 
-const { width, height } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window')
 
 interface OnboardingNameScreenProps {
-  navigation: any;
+  navigation: any
 }
 
 const OnboardingNameScreen: React.FC<OnboardingNameScreenProps> = ({ navigation }) => {
-  const [name, setName] = useState<string>('');
-  const { signIn } = useAuth();
-  const currentStep = 2;
-  const totalSteps = 4;
+  const [name, setName] = useState<string>('')
+  const { signIn } = useAuth()
+  const { showAlert, alertProps } = useCustomAlert()
+  const currentStep = 2
+  const totalSteps = 4
 
   const handleNext = () => {
     if (!name.trim()) {
-      Alert.alert('Please enter your name', 'We need your name to personalize your experience.');
-      return;
+      showAlert({
+        title: 'Please enter your name',
+        message: 'We need your name to personalize your experience.',
+        type: 'warning',
+      })
+      return
     }
-    navigation.navigate('OnboardingGoals', { userName: name.trim() });
-  };
+    navigation.navigate('OnboardingGoals', { userName: name.trim() })
+  }
 
   const handleSkip = async () => {
     try {
-      await signIn('demo@innerlight.com');
+      await signIn('demo@innerlight.com')
     } catch (error) {
-      console.error('Failed to sign in:', error);
+      console.error('Failed to sign in:', error)
     }
-  };
+  }
 
   const handleBack = () => {
-    navigation.goBack();
-  };
+    navigation.goBack()
+  }
 
-  return (<View style={styles.container}>
-    <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+  return (
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
 
-    {/* Progress Bar */}
-    <View style={styles.progressContainer}>
-      <View style={styles.progressBackground}>
-        <View style={[styles.progressBar, { width: (width * 0.2) * (currentStep / totalSteps) }]} />
-      </View>
-    </View>
-
-    {/* Header */}
-    <View style={styles.header}>
-      <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-        <Text style={styles.backText}>‹</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
-        <Text style={styles.skipText}>Skip</Text>
-      </TouchableOpacity>
-    </View>
-
-    {/* Main Content */}
-    <View style={styles.content}>
-      <Animated.View
-        entering={FadeInUp.delay(300).springify()}
-        style={styles.avatarContainer}
-      >
-        <View style={styles.avatarCircle}>
-          <Text style={styles.avatarEmoji}>👨‍💼</Text>
+      {/* Progress Bar */}
+      <View style={styles.progressContainer}>
+        <View style={styles.progressBackground}>
+          <View style={[styles.progressBar, { width: width * 0.2 * (currentStep / totalSteps) }]} />
         </View>
+      </View>
+
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+          <Text style={styles.backText}>‹</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
+          <Text style={styles.skipText}>Skip</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Main Content */}
+      <View style={styles.content}>
+        <Animated.View entering={FadeInUp.delay(300).springify()} style={styles.avatarContainer}>
+          <View style={styles.avatarCircle}>
+            <Text style={styles.avatarEmoji}>👨‍💼</Text>
+          </View>
+        </Animated.View>
+
+        <Animated.View entering={FadeInUp.delay(500).springify()} style={styles.textContainer}>
+          <Text style={styles.title}>How should I call you?</Text>
+        </Animated.View>
+
+        <Animated.View entering={FadeInUp.delay(700).springify()} style={styles.inputContainer}>
+          <TextInput
+            style={styles.textInput}
+            value={name}
+            onChangeText={setName}
+            placeholder="Enter your name"
+            placeholderTextColor="#9CA3AF"
+            autoFocus={true}
+            returnKeyType="next"
+            onSubmitEditing={handleNext}
+          />
+          <View style={styles.underline} />
+        </Animated.View>
+      </View>
+
+      {/* Next Button */}
+      <Animated.View entering={FadeInDown.delay(900).springify()} style={styles.buttonContainer}>
+        <TouchableOpacity style={[styles.nextButton, !name.trim() && styles.nextButtonDisabled]} onPress={handleNext} disabled={!name.trim()}>
+          <LinearGradient colors={name.trim() ? ['#8B5CF6', '#7C3AED', '#6D28D9'] : ['#D1D5DB', '#9CA3AF']} style={styles.nextButtonGradient}>
+            <Text style={[styles.nextButtonText, !name.trim() && styles.nextButtonTextDisabled]}>Next</Text>
+          </LinearGradient>
+        </TouchableOpacity>
       </Animated.View>
 
-      <Animated.View
-        entering={FadeInUp.delay(500).springify()}
-        style={styles.textContainer}
-      >
-        <Text style={styles.title}>How should I call you?</Text>
-      </Animated.View>
+      {/* Progress Indicator */}
+      <View style={styles.progressContainer}>
+        <View style={styles.progressBar} />
+      </View>
 
-      <Animated.View
-        entering={FadeInUp.delay(700).springify()}
-        style={styles.inputContainer}
-      >
-        <TextInput
-          style={styles.textInput}
-          value={name}
-          onChangeText={setName}
-          placeholder="Enter your name"
-          placeholderTextColor="#9CA3AF"
-          autoFocus={true}
-          returnKeyType="next"
-          onSubmitEditing={handleNext}
-        />
-        <View style={styles.underline} />
-      </Animated.View>
+      <CustomAlert {...alertProps} />
     </View>
-
-    {/* Next Button */}
-    <Animated.View
-      entering={FadeInDown.delay(900).springify()}
-      style={styles.buttonContainer}
-    >
-      <TouchableOpacity
-        style={[styles.nextButton, !name.trim() && styles.nextButtonDisabled]}
-        onPress={handleNext}
-        disabled={!name.trim()}
-      >
-        <LinearGradient
-          colors={name.trim() ? ['#8B5CF6', '#7C3AED', '#6D28D9'] : ['#D1D5DB', '#9CA3AF']}
-          style={styles.nextButtonGradient}
-        >
-          <Text style={[styles.nextButtonText, !name.trim() && styles.nextButtonTextDisabled]}>
-            Next
-          </Text>
-        </LinearGradient>
-      </TouchableOpacity>
-    </Animated.View>
-
-    {/* Progress Indicator */}
-    <View style={styles.progressContainer}>
-      <View style={styles.progressBar} />
-    </View>
-  </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -274,6 +254,6 @@ const styles = StyleSheet.create({
   nextButtonTextDisabled: {
     color: '#6B7280',
   },
-});
+})
 
-export default OnboardingNameScreen;
+export default OnboardingNameScreen

@@ -1,31 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-  Switch,
-  Alert,
-  Modal,
-  Dimensions,
-  StatusBar,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-  runOnJS,
-} from 'react-native-reanimated';
-import { Typography } from '../../utils/typography';
-import { useAuth } from '../../contexts/AuthContext';
+import React, { useState, useEffect } from 'react'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Switch, Modal, Dimensions, StatusBar } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { Ionicons } from '@expo/vector-icons'
+import { LinearGradient } from 'expo-linear-gradient'
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, runOnJS } from 'react-native-reanimated'
+import { Typography } from '../../utils/typography'
+import { useAuth } from '../../contexts/AuthContext'
+import { useCustomAlert } from '../../hooks/useCustomAlert'
+import CustomAlert from '../../components/common/CustomAlert'
 
-const { width, height } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window')
 
 // Color scheme from SignInScreen
 const colors = {
@@ -39,12 +23,12 @@ const colors = {
   darkGray: '#374151',
   purple: '#8B5CF6',
   background: '#F9FAFB',
-};
+}
 
 interface ModalContentProps {
-  title: React.ReactNode;
-  onClose: () => void;
-  children: React.ReactNode;
+  title: React.ReactNode
+  onClose: () => void
+  children: React.ReactNode
 }
 
 const ModalContent = ({ title, onClose, children }: ModalContentProps) => (
@@ -57,76 +41,74 @@ const ModalContent = ({ title, onClose, children }: ModalContentProps) => (
         <Ionicons name="close" size={24} color={colors.darkGray} />
       </TouchableOpacity>
     </View>
-    <View style={styles.modalContent}>
-      {children}
-    </View>
+    <View style={styles.modalContent}>{children}</View>
   </View>
-);
+)
 
 export const ProfileScreen: React.FC = () => {
-  const { signOut, state } = useAuth();
-  const user = state.user;
-  const [stats, setStats] = useState<any>(null);
-  const [notifications, setNotifications] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
-  const [activeModal, setActiveModal] = useState<string | null>(null);
+  const { signOut, state } = useAuth()
+  const { showAlert, alertProps } = useCustomAlert()
+  const user = state.user
+  const [stats, setStats] = useState<any>(null)
+  const [notifications, setNotifications] = useState(true)
+  const [darkMode, setDarkMode] = useState(false)
+  const [activeModal, setActiveModal] = useState<string | null>(null)
 
-  const modalAnimation = useSharedValue(0);
-  const overlayAnimation = useSharedValue(0);
+  const modalAnimation = useSharedValue(0)
+  const overlayAnimation = useSharedValue(0)
 
   useEffect(() => {
     // Keep some sample stats for now (could be replaced by real API)
-    setStats({ streak: 0, totalDaysCompleted: 0 });
-  }, []);
+    setStats({ streak: 0, totalDaysCompleted: 0 })
+  }, [])
 
   const openModal = (modalType: string) => {
-    setActiveModal(modalType);
-    overlayAnimation.value = withTiming(1, { duration: 200 });
-    modalAnimation.value = withSpring(1, { damping: 15, stiffness: 100 });
-  };
+    setActiveModal(modalType)
+    overlayAnimation.value = withTiming(1, { duration: 200 })
+    modalAnimation.value = withSpring(1, { damping: 15, stiffness: 100 })
+  }
 
   const closeModal = () => {
-    overlayAnimation.value = withTiming(0, { duration: 200 });
+    overlayAnimation.value = withTiming(0, { duration: 200 })
     modalAnimation.value = withTiming(0, { duration: 200 }, () => {
-      runOnJS(setActiveModal)(null);
-    });
-  };
+      runOnJS(setActiveModal)(null)
+    })
+  }
 
   const handleSignOut = async () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign Out',
-          onPress: async () => {
-            try {
-              await signOut();
-            } catch (error) {
-              Alert.alert('Error', 'Failed to sign out. Please try again.');
-            }
-          }
+    showAlert({
+      title: 'Sign Out',
+      message: 'Are you sure you want to sign out?',
+      type: 'warning',
+      showCancel: true,
+      confirmText: 'Sign Out',
+      cancelText: 'Cancel',
+      onConfirm: async () => {
+        try {
+          await signOut()
+        } catch (error) {
+          showAlert({
+            title: 'Error',
+            message: 'Failed to sign out. Please try again.',
+            type: 'error',
+          })
         }
-      ]
-    );
-  };
+      },
+    })
+  }
 
   const modalAnimatedStyle = useAnimatedStyle(() => {
     return {
-      transform: [
-        { translateY: (1 - modalAnimation.value) * height },
-        { scale: 0.9 + modalAnimation.value * 0.1 },
-      ],
+      transform: [{ translateY: (1 - modalAnimation.value) * height }, { scale: 0.9 + modalAnimation.value * 0.1 }],
       opacity: modalAnimation.value,
-    };
-  });
+    }
+  })
 
   const overlayAnimatedStyle = useAnimatedStyle(() => {
     return {
       opacity: overlayAnimation.value,
-    };
-  });
+    }
+  })
 
   const renderAccountModal = () => (
     <ModalContent title="Account" onClose={closeModal}>
@@ -160,7 +142,7 @@ export const ProfileScreen: React.FC = () => {
         </View>
       </View>
     </ModalContent>
-  );
+  )
 
   const renderChallengeLogModal = () => (
     <ModalContent title="Challenge Log" onClose={closeModal}>
@@ -172,22 +154,18 @@ export const ProfileScreen: React.FC = () => {
               <Text style={styles.challengeStatus}>Completed</Text>
             </View>
             <Text style={styles.challengeTitle}>Morning Meditation</Text>
-            <Text style={styles.challengeDescription}>
-              15 minutes of mindfulness practice
-            </Text>
+            <Text style={styles.challengeDescription}>15 minutes of mindfulness practice</Text>
           </View>
         ))}
       </ScrollView>
     </ModalContent>
-  );
+  )
 
   const renderInviteFriendsModal = () => (
     <ModalContent title="Invite Friends" onClose={closeModal}>
       <View style={styles.inviteSection}>
         <Text style={styles.inviteTitle}>Share INNER LIGHT with Friends</Text>
-        <Text style={styles.inviteDescription}>
-          Help your friends discover their inner potential
-        </Text>
+        <Text style={styles.inviteDescription}>Help your friends discover their inner potential</Text>
 
         <View style={styles.shareOptions}>
           <TouchableOpacity style={styles.shareOption}>
@@ -207,15 +185,13 @@ export const ProfileScreen: React.FC = () => {
         </View>
       </View>
     </ModalContent>
-  );
+  )
 
   const renderShareFeedbackModal = () => (
     <ModalContent title="Share Feedback" onClose={closeModal}>
       <View style={styles.feedbackSection}>
         <Text style={styles.feedbackTitle}>Would like to see other features?</Text>
-        <Text style={styles.feedbackDescription}>
-          Tell us. We read every suggestion.
-        </Text>
+        <Text style={styles.feedbackDescription}>Tell us. We read every suggestion.</Text>
 
         <View style={styles.feedbackOptions}>
           <TouchableOpacity style={styles.feedbackOption}>
@@ -235,7 +211,7 @@ export const ProfileScreen: React.FC = () => {
         </View>
       </View>
     </ModalContent>
-  );
+  )
 
   if (!user || !stats) {
     return (
@@ -244,7 +220,7 @@ export const ProfileScreen: React.FC = () => {
           <Text style={styles.loadingText}>Loading...</Text>
         </View>
       </SafeAreaView>
-    );
+    )
   }
 
   return (
@@ -259,49 +235,32 @@ export const ProfileScreen: React.FC = () => {
 
         {/* Profile Options */}
         <View style={styles.optionsContainer}>
-          <TouchableOpacity
-            style={styles.option}
-            onPress={() => openModal('account')}
-          >
+          <TouchableOpacity style={styles.option} onPress={() => openModal('account')}>
             <Text style={styles.optionText}>Account</Text>
             <Ionicons name="chevron-forward" size={20} color={colors.primary} />
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.option}
-            onPress={() => openModal('challenge')}
-          >
+          <TouchableOpacity style={styles.option} onPress={() => openModal('challenge')}>
             <Text style={styles.optionText}>Challenge log</Text>
             <Ionicons name="chevron-forward" size={20} color={colors.primary} />
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.option}
-            onPress={() => openModal('invite')}
-          >
+          <TouchableOpacity style={styles.option} onPress={() => openModal('invite')}>
             <Text style={styles.optionText}>Invite friends to INNER LIGHT</Text>
             <Ionicons name="chevron-forward" size={20} color={colors.primary} />
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.feedbackOption}
-            onPress={() => openModal('feedback')}
-          >
+          <TouchableOpacity style={styles.feedbackOption} onPress={() => openModal('feedback')}>
             <View style={styles.feedbackContent}>
               <Text style={styles.feedbackTitle}>Share feedback</Text>
-              <Text style={styles.feedbackSubtitle}>
-                Would like to see other features?
-              </Text>
-              <Text style={styles.feedbackDescription}>
-                Tell us. We read every suggestion.
-              </Text>
+              <Text style={styles.feedbackSubtitle}>Would like to see other features?</Text>
+              <Text style={styles.feedbackDescription}>Tell us. We read every suggestion.</Text>
             </View>
             <View style={styles.feedbackArrow}>
               <Ionicons name="chevron-forward" size={20} color={colors.white} />
             </View>
           </TouchableOpacity>
         </View>
-
 
         {/* Sign Out Button */}
         <View style={styles.signOutContainer}>
@@ -313,18 +272,9 @@ export const ProfileScreen: React.FC = () => {
 
       {/* Modal */}
       {activeModal && (
-        <Modal
-          visible={activeModal !== null}
-          transparent
-          animationType="none"
-          statusBarTranslucent
-        >
+        <Modal visible={activeModal !== null} transparent animationType="none" statusBarTranslucent>
           <Animated.View style={[styles.modalOverlay, overlayAnimatedStyle]}>
-            <TouchableOpacity
-              style={styles.modalBackdrop}
-              onPress={closeModal}
-              activeOpacity={1}
-            />
+            <TouchableOpacity style={styles.modalBackdrop} onPress={closeModal} activeOpacity={1} />
             <Animated.View style={[styles.modalWrapper, modalAnimatedStyle]}>
               {activeModal === 'account' && renderAccountModal()}
               {activeModal === 'challenge' && renderChallengeLogModal()}
@@ -334,9 +284,11 @@ export const ProfileScreen: React.FC = () => {
           </Animated.View>
         </Modal>
       )}
+
+      <CustomAlert {...alertProps} />
     </SafeAreaView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -642,4 +594,4 @@ const styles = StyleSheet.create({
     marginLeft: 16,
     fontWeight: '500',
   },
-});
+})

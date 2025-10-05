@@ -1,6 +1,6 @@
 // src/components/program/ProgramCard.tsx
 import React from 'react'
-import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native'
 import { Program } from '../../types/program-types'
 import { colors } from '../../utils/colors'
 import { Typography } from '../../utils/typography'
@@ -13,71 +13,59 @@ interface ProgramCardProps {
   isEnrolled?: boolean
 }
 
-const { width } = Dimensions.get('window')
-const cardWidth = (width - 60) / 2 // 20px padding on each side + 20px gap
-
 export const ProgramCard: React.FC<ProgramCardProps> = ({ program, onPress, showProgress = false, progressPercentage = 0, isEnrolled = false }) => {
   return (
-    <TouchableOpacity style={styles.container} onPress={onPress}>
-      <View style={styles.imageContainer}>
-        <Image source={{ uri: program.image }} style={styles.image} />
-        {isEnrolled && (
-          <View style={styles.enrolledBadge}>
-            <Text style={styles.enrolledText}>Enrolled</Text>
-          </View>
-        )}
-      </View>
+    <View style={styles.cardWrapper}>
+      <TouchableOpacity style={styles.card} onPress={onPress}>
+        <View style={styles.imageContainer}>
+          <Image source={{ uri: program.image }} style={styles.cardImage} />
+          {isEnrolled && (
+            <View style={styles.enrolledBadge}>
+              <Text style={styles.enrolledText}>Enrolled</Text>
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
 
-      <View style={styles.content}>
-        <Text style={styles.title} numberOfLines={2}>
+      <View style={styles.cardInfo}>
+        <Text style={styles.cardTitle} numberOfLines={2}>
           {program.title}
         </Text>
-
-        <Text style={styles.description} numberOfLines={2}>
-          {program.description}
-        </Text>
-
-        <View style={styles.metadata}>
-          <View style={styles.difficultyBadge}>
-            <Text style={styles.difficultyText}>{program.difficulty.charAt(0).toUpperCase() + program.difficulty.slice(1)}</Text>
-          </View>
-
-          <Text style={styles.duration}>{program.estimatedDuration}</Text>
-        </View>
 
         {showProgress && (
           <View style={styles.progressContainer}>
             <View style={styles.progressBar}>
               <View style={[styles.progressFill, { width: `${progressPercentage}%` }]} />
             </View>
-            <Text style={styles.progressText}>{progressPercentage}% complete</Text>
           </View>
         )}
       </View>
-    </TouchableOpacity>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    width: cardWidth,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    marginBottom: 16,
+  cardWrapper: {
+    width: 180,
+    marginRight: 16,
+  },
+  card: {
+    width: '100%',
+    height: 180,
+    borderRadius: 20,
+    overflow: 'hidden',
+    backgroundColor: '#fff',
+    elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   imageContainer: {
+    flex: 1,
     position: 'relative',
-    height: 120,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    overflow: 'hidden',
   },
-  image: {
+  cardImage: {
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
@@ -97,66 +85,30 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '600',
   },
-  content: {
-    padding: 16,
+  cardInfo: {
+    paddingTop: 12,
+    paddingHorizontal: 4,
+    minHeight: 60, // Changed to minHeight to allow for progress bar
   },
-  title: {
+  cardTitle: {
     ...Typography.h6,
-    fontSize: 16,
     color: colors.text.primary,
-    fontWeight: '600',
+    lineHeight: 20,
     marginBottom: 8,
-    lineHeight: 22,
-  },
-  description: {
-    ...Typography.body2,
-    fontSize: 12,
-    color: colors.text.secondary,
-    lineHeight: 16,
-    marginBottom: 12,
-  },
-  metadata: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  difficultyBadge: {
-    backgroundColor: '#FFF3E0',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  difficultyText: {
-    ...Typography.caption,
-    color: '#FF8A65',
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  duration: {
-    ...Typography.caption,
-    fontSize: 10,
-    color: colors.text.secondary,
+    height: 40, // Fixed height for title area (2 lines max)
   },
   progressContainer: {
-    marginTop: 8,
+    marginTop: 4, // Reduced margin to fit better
   },
   progressBar: {
     height: 4,
     backgroundColor: '#E5E7EB',
     borderRadius: 2,
     overflow: 'hidden',
-    marginBottom: 4,
   },
   progressFill: {
     height: '100%',
     backgroundColor: colors.primary.main,
     borderRadius: 2,
-  },
-  progressText: {
-    ...Typography.caption,
-    fontSize: 10,
-    color: colors.text.secondary,
-    textAlign: 'center',
   },
 })

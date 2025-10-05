@@ -1,55 +1,55 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Dimensions,
-  TouchableOpacity,
-  StatusBar,
-  Alert,
-  Image
-} from 'react-native';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useAuth } from '../../contexts/AuthContext';
-import { Typography } from '../../utils/typography';
+import React, { useState } from 'react'
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity, StatusBar, Image } from 'react-native'
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated'
+import { LinearGradient } from 'expo-linear-gradient'
+import { useAuth } from '../../contexts/AuthContext'
+import { Typography } from '../../utils/typography'
+import { useCustomAlert } from '../../hooks/useCustomAlert'
+import CustomAlert from '../../components/common/CustomAlert'
 
-const { width, height } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window')
 
 interface SignInScreenProps {
-  navigation: any;
+  navigation: any
 }
 
 const SignInScreen: React.FC<SignInScreenProps> = ({ navigation }) => {
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const { signInWithGoogle } = useAuth();
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const { signInWithGoogle } = useAuth()
+  const { showAlert, alertProps } = useCustomAlert()
 
   const handleExploreApp = async (): Promise<void> => {
-    setIsLoading(true);
+    setIsLoading(true)
     try {
-      navigation.navigate('OnboardingFlow');
+      navigation.navigate('OnboardingFlow')
     } catch (error) {
-      Alert.alert('Error', 'Failed to explore app. Please try again.', [
-        { text: 'OK' }
-      ]);
+      showAlert({
+        title: 'Error',
+        message: 'Failed to explore app. Please try again.',
+        type: 'error',
+      })
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   const handleGoogleSignIn = async (): Promise<void> => {
-    setIsLoading(true);
+    setIsLoading(true)
     try {
-      const user = await signInWithGoogle();
+      const user = await signInWithGoogle()
       if (user) {
-        navigation.reset({ index: 0, routes: [{ name: 'Auth' }] });
+        navigation.reset({ index: 0, routes: [{ name: 'Auth' }] })
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to sign in with Google. Please try again.');
+      showAlert({
+        title: 'Error',
+        message: 'Failed to sign in with Google. Please try again.',
+        type: 'error',
+      })
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   return (
     <View style={styles.container}>
@@ -57,29 +57,17 @@ const SignInScreen: React.FC<SignInScreenProps> = ({ navigation }) => {
 
       {/* Top Section with Static Image and Gradient */}
       <View style={styles.topSection}>
-        <LinearGradient
-          colors={['#8B5CF6', '#7C3AED', '#6D28D9']}
-          style={styles.topGradient}
-        >
-          <Animated.View
-            entering={FadeInUp.delay(300).springify()}
-            style={styles.contentSection}
-          >
+        <LinearGradient colors={['#8B5CF6', '#7C3AED', '#6D28D9']} style={styles.topGradient}>
+          <Animated.View entering={FadeInUp.delay(300).springify()} style={styles.contentSection}>
             <Text style={styles.mainTitle}>Light Up Your</Text>
             <Text style={styles.mainTitleBold}>Inner Peace!</Text>
-            <Text style={styles.description}>
-              Transform your mindset and discover the power within you. Start your journey to inner peace today.
-            </Text>
+            <Text style={styles.description}>Transform your mindset and discover the power within you. Start your journey to inner peace today.</Text>
 
             {/* Static Illustration Placeholder */}
             <View style={styles.illustrationContainer}>
               <View style={styles.illustrationPlaceholder}>
                 {/* You can replace this with your actual image */}
-                <Image
-                  source={require('../../../assets/med.png')}
-                  style={styles.illustrationImage}
-                  resizeMode="contain"
-                />
+                <Image source={require('../../../assets/med.png')} style={styles.illustrationImage} resizeMode="contain" />
               </View>
             </View>
           </Animated.View>
@@ -87,24 +75,14 @@ const SignInScreen: React.FC<SignInScreenProps> = ({ navigation }) => {
       </View>
 
       {/* Bottom Section with White Background */}
-      <Animated.View
-        entering={FadeInDown.delay(500).springify()}
-        style={styles.bottomSection}
-      >
+      <Animated.View entering={FadeInDown.delay(500).springify()} style={styles.bottomSection}>
         <View style={styles.bottomContent}>
           <Text style={styles.welcomeTitle}>Welcome to Inner Light!</Text>
 
-
           {/* Buttons */}
           <View style={styles.buttonsContainer}>
-            <TouchableOpacity
-              style={[styles.otpButton, isLoading && styles.buttonDisabled]}
-              onPress={handleExploreApp}
-              disabled={isLoading}
-            >
-              <Text style={styles.otpButtonText}>
-                Get Started
-              </Text>
+            <TouchableOpacity style={[styles.otpButton, isLoading && styles.buttonDisabled]} onPress={handleExploreApp} disabled={isLoading}>
+              <Text style={styles.otpButtonText}>Get Started</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -114,29 +92,26 @@ const SignInScreen: React.FC<SignInScreenProps> = ({ navigation }) => {
             >
               <Image
                 source={{
-                  uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/480px-Google_%22G%22_logo.svg.png'
+                  uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/480px-Google_%22G%22_logo.svg.png',
                 }}
                 style={[{ width: 20, height: 20, marginRight: 10 }]}
                 resizeMode="contain"
               />
-              <Text style={styles.googleButtonText}>
-                Sign in with Google
-              </Text>
+              <Text style={styles.googleButtonText}>Sign in with Google</Text>
             </TouchableOpacity>
           </View>
 
           {/* Footer Text */}
           <Text style={styles.footerText}>
-            By continuing, you agree to Inner Light's{' '}
-            <Text style={styles.linkText}>policies</Text> and our{' '}
-            <Text style={styles.linkText}>Terms & Conditions</Text>.
+            By continuing, you agree to Inner Light's <Text style={styles.linkText}>policies</Text> and our <Text style={styles.linkText}>Terms & Conditions</Text>.
           </Text>
-
         </View>
       </Animated.View>
+
+      <CustomAlert {...alertProps} />
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -266,7 +241,6 @@ const styles = StyleSheet.create({
     color: '#8B5CF6',
     fontWeight: '600',
   },
-});
+})
 
-
-export default SignInScreen;
+export default SignInScreen

@@ -1,12 +1,14 @@
 // src/screens/program/LessonSlideScreen.tsx
 import React, { useState, useEffect } from 'react'
-import { View, StyleSheet, Alert, BackHandler } from 'react-native'
+import { View, StyleSheet, BackHandler } from 'react-native'
 import { RouteProp } from '@react-navigation/native'
 import { StackNavigationProp } from '@react-navigation/stack'
 import { Lesson, Slide } from '../../types/program-types'
 import { programService } from '../../services/programService'
 import { progressService } from '../../services/progressService'
 import { LessonSlide } from '../../components/program/LessonSlide'
+import { useCustomAlert } from '../../hooks/useCustomAlert'
+import CustomAlert from '../../components/common/CustomAlert'
 
 type RootStackParamList = {
   LessonSlide: {
@@ -28,6 +30,7 @@ interface Props {
 
 export const LessonSlideScreen: React.FC<Props> = ({ route, navigation }) => {
   const { programId, moduleId, lessonId, slideIndex = 0 } = route.params
+  const { showAlert, alertProps } = useCustomAlert()
 
   const [lesson, setLesson] = useState<Lesson | null>(null)
   const [currentSlideIndex, setCurrentSlideIndex] = useState(slideIndex)
@@ -48,32 +51,38 @@ export const LessonSlideScreen: React.FC<Props> = ({ route, navigation }) => {
     try {
       const lessonData = programService.getLesson(programId, moduleId, lessonId)
       if (!lessonData) {
-        Alert.alert('Error', 'Lesson not found')
-        navigation.goBack()
+        showAlert({
+          title: 'Error',
+          message: 'Lesson not found',
+          type: 'error',
+          onConfirm: () => navigation.goBack(),
+        })
         return
       }
       setLesson(lessonData)
     } catch (error) {
       console.error('Error loading lesson:', error)
-      Alert.alert('Error', 'Failed to load lesson')
-      navigation.goBack()
+      showAlert({
+        title: 'Error',
+        message: 'Failed to load lesson',
+        type: 'error',
+        onConfirm: () => navigation.goBack(),
+      })
     } finally {
       setLoading(false)
     }
   }
 
   const handleBackPress = (): boolean => {
-    Alert.alert('Exit Lesson', 'Are you sure you want to exit this lesson? Your progress will be saved.', [
-      {
-        text: 'Cancel',
-        style: 'cancel',
-      },
-      {
-        text: 'Exit',
-        style: 'destructive',
-        onPress: () => navigation.goBack(),
-      },
-    ])
+    showAlert({
+      title: 'Exit Lesson',
+      message: 'Are you sure you want to exit this lesson? Your progress will be saved.',
+      type: 'warning',
+      showCancel: true,
+      confirmText: 'Exit',
+      cancelText: 'Cancel',
+      onConfirm: () => navigation.goBack(),
+    })
     return true
   }
 
@@ -109,31 +118,31 @@ export const LessonSlideScreen: React.FC<Props> = ({ route, navigation }) => {
       // Check if there's a next lesson
       const nextLesson = programService.getNextLesson(programId, moduleId, lessonId)
 
-      Alert.alert(
-        'Lesson Complete!',
-        "Great job! You've completed this lesson.",
-        [
-          {
-            text: 'Back to Program',
-            onPress: () => {
-              // Go back to ProgramDetail and reload the progress
-              navigation.goBack()
-            },
-          },
-          nextLesson
-            ? {
-                text: 'Next Lesson',
-                onPress: () =>
-                  navigation.replace('LessonSlide', {
-                    programId,
-                    moduleId: nextLesson.moduleId,
-                    lessonId: nextLesson.lessonId,
-                    slideIndex: 0,
-                  }),
-              }
-            : null,
-        ].filter(Boolean) as any[]
-      )
+      if (nextLesson) {
+        showAlert({
+          title: 'Lesson Complete!',
+          message: "Great job! You've completed this lesson. Continue to the next lesson?",
+          type: 'success',
+          showCancel: true,
+          confirmText: 'Next Lesson',
+          cancelText: 'Back to Program',
+          onConfirm: () =>
+            navigation.replace('LessonSlide', {
+              programId,
+              moduleId: nextLesson.moduleId,
+              lessonId: nextLesson.lessonId,
+              slideIndex: 0,
+            }),
+        })
+      } else {
+        showAlert({
+          title: 'Lesson Complete!',
+          message: "Great job! You've completed this lesson.",
+          type: 'success',
+          confirmText: 'Back to Program',
+          onConfirm: () => navigation.goBack(),
+        })
+      }
     } catch (error) {
       console.error('Error handling lesson completion:', error)
       navigation.goBack()
@@ -161,6 +170,8 @@ export const LessonSlideScreen: React.FC<Props> = ({ route, navigation }) => {
         slideNumber={currentSlideIndex + 1}
         totalSlides={lesson.slides.length}
       />
+
+      <CustomAlert {...alertProps} />
     </View>
   )
 }

@@ -1,199 +1,124 @@
 // src/components/program/LessonCard.tsx
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { colors } from '../../utils/colors';
-import { AnimatedView } from '../common/AnimatedView';
+import React from 'react'
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
+import { colors } from '../../utils/colors'
+import { Typography } from '../../utils/typography'
 
 interface LessonCardProps {
-  title: string;
-  duration: string;
-  type: 'lesson' | 'challenge' | 'exercise';
-  isCompleted: boolean;
-  isLocked: boolean;
-  onPress: () => void;
-  delay?: number;
+  title: string
+  duration?: string
+  type?: string
+  onPress: () => void
+  isCompleted: boolean
+  isLocked: boolean
+  image?: string // Optional thumbnail image
 }
 
-export const LessonCard: React.FC<LessonCardProps> = ({
-  title,
-  duration,
-  type,
-  isCompleted,
-  isLocked,
-  onPress,
-  delay = 0,
-}) => {
-  const getTypeIcon = () => {
-    switch (type) {
-      case 'lesson':
-        return 'book-outline';
-      case 'challenge':
-        return 'trophy-outline';
-      case 'exercise':
-        return 'fitness-outline';
-      default:
-        return 'book-outline';
-    }
-  };
-
-  const getTypeColor = () => {
-    switch (type) {
-      case 'lesson':
-        return colors.secondary.main;
-      case 'challenge':
-        return colors.accent.main;
-      case 'exercise':
-        return colors.primary.main;
-      default:
-        return colors.secondary.main;
-    }
-  };
-
-  const getTypeGradient = () => {
-    switch (type) {
-      case 'lesson':
-        return [colors.secondary.light, colors.secondary.main];
-      case 'challenge':
-        return [colors.accent.light, colors.accent.main];
-      case 'exercise':
-        return [colors.primary.light, colors.primary.main];
-      default:
-        return [colors.secondary.light, colors.secondary.main];
-    }
-  };
-
+export const LessonCard: React.FC<LessonCardProps> = ({ title, duration, type, onPress, isCompleted, isLocked, image }) => {
   return (
-    <AnimatedView animation="slideUp" delay={delay}>
-      <TouchableOpacity
-        style={[
-          styles.container,
-          isLocked && styles.lockedContainer,
-          isCompleted && styles.completedContainer
-        ]}
-        onPress={onPress}
-        disabled={isLocked}
-        activeOpacity={0.8}
-      >
-        <LinearGradient
-          colors={
-            isLocked
-              ? [colors.background.secondary, colors.background.secondary] as [string, string]
-              : getTypeGradient() as [string, string]
-          }
-          style={styles.iconContainer}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
-          <Ionicons
-            name={isLocked ? 'lock-closed' : getTypeIcon()}
-            size={24}
-            color={isLocked ? colors.text.secondary : colors.text.inverse}
-          />
-        </LinearGradient>
+    <TouchableOpacity style={styles.container} onPress={onPress} disabled={isLocked} activeOpacity={0.7}>
+      <View style={styles.content}>
+        {/* Thumbnail Image */}
+        <View style={styles.thumbnailContainer}>
+          {image ? (
+            <Image source={{ uri: image }} style={styles.thumbnail} />
+          ) : (
+            <View style={[styles.thumbnail, styles.placeholderThumbnail]}>
+              <Ionicons name="book-outline" size={24} color="#9CA3AF" />
+            </View>
+          )}
+        </View>
 
-        <View style={styles.content}>
-          <Text style={[
-            styles.title,
-            isLocked && styles.lockedText
-          ]}>
+        {/* Title and Badge */}
+        <View style={styles.textContainer}>
+          <Text style={styles.title} numberOfLines={2}>
             {title}
           </Text>
-          <View style={styles.metadata}>
-            <Text style={[
-              styles.duration,
-              isLocked && styles.lockedText
-            ]}>
-              {duration}
-            </Text>
-            <Text style={[
-              styles.type,
-              { color: isLocked ? colors.text.secondary : getTypeColor() }
-            ]}>
-              {type.charAt(0).toUpperCase() + type.slice(1)}
-            </Text>
+
+          {/* Lesson Type Badge */}
+          <View style={styles.badgeContainer}>
+            <Ionicons name="book-outline" size={14} color="#F59E0B" />
+            <Text style={styles.badgeText}>Lesson</Text>
           </View>
         </View>
 
-        <View style={styles.statusContainer}>
-          {isCompleted && (
-            <View style={styles.completedBadge}>
-              <Ionicons name="checkmark-circle" size={24} color={colors.success.main} />
+        {/* Right side - Status indicator */}
+        <View style={styles.rightContainer}>
+          {isLocked ? (
+            <Ionicons name="lock-closed" size={20} color="#9CA3AF" />
+          ) : isCompleted ? (
+            <View style={styles.checkmarkContainer}>
+              <Ionicons name="checkmark-circle" size={24} color="#0EA5E9" />
             </View>
-          )}
-          {!isLocked && !isCompleted && (
-            <Ionicons name="chevron-forward" size={20} color={colors.text.secondary} />
-          )}
+          ) : null}
         </View>
-      </TouchableOpacity>
-    </AnimatedView>
-  );
-};
+      </View>
+
+      {/* Separator line */}
+      <View style={styles.separator} />
+    </TouchableOpacity>
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.background.card,
-    borderRadius: 16,
-    padding: 16,
-    marginVertical: 6,
-    borderWidth: 1,
-    borderColor: colors.border.light,
-    shadowColor: colors.shadow.main,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  lockedContainer: {
-    opacity: 0.6,
-  },
-  completedContainer: {
-    borderColor: colors.success.light,
-    backgroundColor: colors.success.background,
-  },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
+    backgroundColor: '#FFFFFF',
   },
   content: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text.primary,
-    marginBottom: 4,
-  },
-  metadata: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingVertical: 12,
+    paddingRight: 16,
   },
-  duration: {
-    fontSize: 14,
-    color: colors.text.secondary,
-    marginRight: 12,
+  thumbnailContainer: {
+    marginRight: 16,
   },
-  type: {
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+  thumbnail: {
+    width: 64,
+    height: 64,
+    borderRadius: 12,
+    backgroundColor: '#F3F4F6',
   },
-  lockedText: {
-    color: colors.text.secondary,
-  },
-  statusContainer: {
+  placeholderThumbnail: {
+    justifyContent: 'center',
     alignItems: 'center',
+  },
+  textContainer: {
+    flex: 1,
     justifyContent: 'center',
   },
-  completedBadge: {
-    padding: 4,
+  title: {
+    ...Typography.body1,
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.text.primary,
+    marginBottom: 6,
   },
-});
+  badgeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    gap: 4,
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#F59E0B',
+  },
+  rightContainer: {
+    marginLeft: 12,
+  },
+  checkmarkContainer: {
+    // Empty for now, just contains the icon
+  },
+  separator: {
+    height: 1,
+    backgroundColor: '#E5E7EB',
+    marginLeft: 80, // Align with text, after thumbnail
+  },
+})

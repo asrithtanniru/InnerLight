@@ -1,38 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  StatusBar,
-  Dimensions,
-  ScrollView,
-  Alert,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
-import { Typography } from '../../utils/typography';
-import { useAuth } from '../../contexts/AuthContext';
+import React, { useState, useEffect } from 'react'
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, StatusBar, Dimensions, ScrollView } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated'
+import { Typography } from '../../utils/typography'
+import { useAuth } from '../../contexts/AuthContext'
+import { useCustomAlert } from '../../hooks/useCustomAlert'
+import CustomAlert from '../../components/common/CustomAlert'
 
-const { width, height } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window')
 
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { RouteProp } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import type { RouteProp } from '@react-navigation/native'
 
 interface OnboardingFlowProps {
-  navigation: NativeStackNavigationProp<any>;
-  route?: RouteProp<any>;
+  navigation: NativeStackNavigationProp<any>
+  route?: RouteProp<any>
 }
 
 const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ navigation }) => {
-  const [currentStep, setCurrentStep] = useState(1);
-  const [userName, setUserName] = useState('');
-  const [selectedGoal, setSelectedGoal] = useState('');
-  const [isAutoProgressing, setIsAutoProgressing] = useState(false);
-  const { signIn } = useAuth() as { signIn: (email: string) => Promise<any> };
+  const [currentStep, setCurrentStep] = useState(1)
+  const [userName, setUserName] = useState('')
+  const [selectedGoal, setSelectedGoal] = useState('')
+  const [isAutoProgressing, setIsAutoProgressing] = useState(false)
+  const { signIn } = useAuth() as { signIn: (email: string) => Promise<any> }
+  const { showAlert, alertProps } = useCustomAlert()
 
-  const totalSteps = 4;
+  const totalSteps = 4
 
   const goals = [
     {
@@ -63,85 +56,81 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ navigation }) => {
       gradient: ['#EC4899', '#DB2777', '#BE185D'],
       emoji: '💕',
     },
-  ];
+  ]
 
   useEffect(() => {
     if (currentStep === 4) {
-      setIsAutoProgressing(true);
+      setIsAutoProgressing(true)
       const timer = setTimeout(async () => {
         try {
-          await signIn('demo@innerlight.com');
-          setIsAutoProgressing(false);
-          navigation.reset({ index: 0, routes: [{ name: 'Auth' }] });
+          await signIn('demo@innerlight.com')
+          setIsAutoProgressing(false)
+          navigation.reset({ index: 0, routes: [{ name: 'Auth' }] })
         } catch (error) {
-          console.error('Failed to sign in:', error);
-          setIsAutoProgressing(false);
+          console.error('Failed to sign in:', error)
+          setIsAutoProgressing(false)
         }
-      }, 4000);
-      return () => clearTimeout(timer);
+      }, 4000)
+      return () => clearTimeout(timer)
     }
-  }, [currentStep, signIn, navigation]);
+  }, [currentStep, signIn, navigation])
 
   const handleNext = () => {
     if (currentStep === 2 && !userName.trim()) {
-      Alert.alert('Please enter your name', 'We need your name to personalize your experience.');
-      return;
+      showAlert({
+        title: 'Please enter your name',
+        message: 'We need your name to personalize your experience.',
+        type: 'warning',
+      })
+      return
     }
     if (currentStep === 3 && !selectedGoal) {
-      Alert.alert('Please select a goal', 'Choose what you\'d like to improve.');
-      return;
+      showAlert({
+        title: 'Please select a goal',
+        message: "Choose what you'd like to improve.",
+        type: 'warning',
+      })
+      return
     }
     if (currentStep < totalSteps) {
-      setCurrentStep(currentStep + 1);
+      setCurrentStep(currentStep + 1)
     }
-  };
+  }
 
   const handleBack = () => {
     if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
+      setCurrentStep(currentStep - 1)
     }
-  };
+  }
 
   const handleSkip = async () => {
     try {
-      await signIn('demo@innerlight.com');
-      navigation.reset({ index: 0, routes: [{ name: 'Auth' }] });
+      await signIn('demo@innerlight.com')
+      navigation.reset({ index: 0, routes: [{ name: 'Auth' }] })
     } catch (error) {
-      console.error('Failed to sign in:', error);
+      console.error('Failed to sign in:', error)
     }
-  };
+  }
 
   const renderProgressBar = () => (
     <View style={styles.progressContainer}>
       <View style={styles.progressBackground}>
-        <View
-          style={[
-            styles.progressBar,
-            { width: `${(currentStep / totalSteps) * 100}%` }
-          ]}
-        />
+        <View style={[styles.progressBar, { width: `${(currentStep / totalSteps) * 100}%` }]} />
       </View>
     </View>
-  );
+  )
 
   const renderHeader = () => (
     <View style={styles.headerContainer}>
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={handleBack}
-        disabled={currentStep === 1}
-      >
-        <Text style={[
-          styles.backIcon,
-          { color: currentStep === 1 ? '#D1D5DB' : '#8B5CF6' }
-        ]}>←</Text>
+      <TouchableOpacity style={styles.backButton} onPress={handleBack} disabled={currentStep === 1}>
+        <Text style={[styles.backIcon, { color: currentStep === 1 ? '#D1D5DB' : '#8B5CF6' }]}>←</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
         <Text style={styles.skipText}>Skip</Text>
       </TouchableOpacity>
     </View>
-  );
+  )
 
   const renderIntroScreen = () => (
     <>
@@ -149,10 +138,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ navigation }) => {
       {renderHeader()}
 
       <View style={styles.content}>
-        <Animated.View
-          entering={FadeInUp.delay(300).springify()}
-          style={styles.avatarContainer}
-        >
+        <Animated.View entering={FadeInUp.delay(300).springify()} style={styles.avatarContainer}>
           <View style={styles.avatarCircle}>
             <Text style={styles.avatarEmoji}>👨‍💼</Text>
           </View>
@@ -163,10 +149,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ navigation }) => {
 
         <View style={styles.textContainer}>
           <Text style={styles.title}>Hello, I'm Eden</Text>
-          <Text style={styles.subtitle}>
-            I'm an AI coach trained in psychology.{'\n'}
-            I will help you along your journey.
-          </Text>
+          <Text style={styles.subtitle}>I'm an AI coach trained in psychology.{'\n'}I will help you along your journey.</Text>
         </View>
       </View>
 
@@ -176,7 +159,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ navigation }) => {
         </TouchableOpacity>
       </View>
     </>
-  );
+  )
 
   const renderNameScreen = () => (
     <>
@@ -184,26 +167,17 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ navigation }) => {
       {renderHeader()}
 
       <View style={styles.content}>
-        <Animated.View
-          entering={FadeInUp.delay(300).springify()}
-          style={styles.avatarContainer}
-        >
+        <Animated.View entering={FadeInUp.delay(300).springify()} style={styles.avatarContainer}>
           <View style={styles.avatarCircleSmall}>
             <Text style={styles.avatarEmojiSmall}>👨‍💼</Text>
           </View>
         </Animated.View>
 
-        <Animated.View
-          entering={FadeInUp.delay(500).springify()}
-          style={styles.textContainer}
-        >
+        <Animated.View entering={FadeInUp.delay(500).springify()} style={styles.textContainer}>
           <Text style={styles.title}>How should I call you?</Text>
         </Animated.View>
 
-        <Animated.View
-          entering={FadeInUp.delay(700).springify()}
-          style={styles.inputContainer}
-        >
+        <Animated.View entering={FadeInUp.delay(700).springify()} style={styles.inputContainer}>
           <TextInput
             style={styles.textInput}
             value={userName}
@@ -218,27 +192,15 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ navigation }) => {
         </Animated.View>
       </View>
 
-      <Animated.View
-        entering={FadeInDown.delay(900).springify()}
-        style={styles.buttonContainer}
-      >
-        <TouchableOpacity
-          style={[styles.nextButton, !userName.trim() && styles.nextButtonDisabled]}
-          onPress={handleNext}
-          disabled={!userName.trim()}
-        >
-          <LinearGradient
-            colors={userName.trim() ? ['#8B5CF6', '#7C3AED', '#6D28D9'] : ['#D1D5DB', '#9CA3AF']}
-            style={styles.nextButtonGradient}
-          >
-            <Text style={[styles.nextButtonText, !userName.trim() && styles.nextButtonTextDisabled]}>
-              Next
-            </Text>
+      <Animated.View entering={FadeInDown.delay(900).springify()} style={styles.buttonContainer}>
+        <TouchableOpacity style={[styles.nextButton, !userName.trim() && styles.nextButtonDisabled]} onPress={handleNext} disabled={!userName.trim()}>
+          <LinearGradient colors={userName.trim() ? ['#8B5CF6', '#7C3AED', '#6D28D9'] : ['#D1D5DB', '#9CA3AF']} style={styles.nextButtonGradient}>
+            <Text style={[styles.nextButtonText, !userName.trim() && styles.nextButtonTextDisabled]}>Next</Text>
           </LinearGradient>
         </TouchableOpacity>
       </Animated.View>
     </>
-  );
+  )
 
   const renderGoalsScreen = () => (
     <>
@@ -246,10 +208,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ navigation }) => {
       {renderHeader()}
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <Animated.View
-          entering={FadeInUp.delay(200).springify()}
-          style={styles.titleContainer}
-        >
+        <Animated.View entering={FadeInUp.delay(200).springify()} style={styles.titleContainer}>
           <Text style={styles.goalsTitle}>What Would You Like To{'\n'}Improve In Life?</Text>
           <Text style={styles.goalsSubtitle}>Select one goal, later you'll be able to add more</Text>
         </Animated.View>
@@ -257,20 +216,9 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ navigation }) => {
         <View style={styles.goalsContainer}>
           <View style={styles.goalsRow}>
             {goals.slice(0, 2).map((goal, index) => (
-              <Animated.View
-                key={goal.id}
-                entering={FadeInUp.delay(300 + index * 100).springify()}
-              >
-                <TouchableOpacity
-                  style={[styles.goalCard, selectedGoal === goal.id && styles.selectedGoalCard]}
-                  onPress={() => setSelectedGoal(goal.id)}
-                >
-                  <LinearGradient
-                    colors={goal.gradient as any}
-                    style={styles.goalGradient}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                  >
+              <Animated.View key={goal.id} entering={FadeInUp.delay(300 + index * 100).springify()}>
+                <TouchableOpacity style={[styles.goalCard, selectedGoal === goal.id && styles.selectedGoalCard]} onPress={() => setSelectedGoal(goal.id)}>
+                  <LinearGradient colors={goal.gradient as any} style={styles.goalGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
                     <View style={styles.goalContent}>
                       <Text style={styles.goalEmoji}>{goal.emoji}</Text>
                       <View style={styles.goalTextContainer}>
@@ -290,20 +238,9 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ navigation }) => {
           </View>
           <View style={styles.goalsRow}>
             {goals.slice(2, 4).map((goal, index) => (
-              <Animated.View
-                key={goal.id}
-                entering={FadeInUp.delay(500 + index * 100).springify()}
-              >
-                <TouchableOpacity
-                  style={[styles.goalCard, selectedGoal === goal.id && styles.selectedGoalCard]}
-                  onPress={() => setSelectedGoal(goal.id)}
-                >
-                  <LinearGradient
-                    colors={goal.gradient as any}
-                    style={styles.goalGradient}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                  >
+              <Animated.View key={goal.id} entering={FadeInUp.delay(500 + index * 100).springify()}>
+                <TouchableOpacity style={[styles.goalCard, selectedGoal === goal.id && styles.selectedGoalCard]} onPress={() => setSelectedGoal(goal.id)}>
+                  <LinearGradient colors={goal.gradient as any} style={styles.goalGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
                     <View style={styles.goalContent}>
                       <Text style={styles.goalEmoji}>{goal.emoji}</Text>
                       <View style={styles.goalTextContainer}>
@@ -324,27 +261,15 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ navigation }) => {
         </View>
       </ScrollView>
 
-      <Animated.View
-        entering={FadeInDown.delay(800).springify()}
-        style={styles.buttonContainer}
-      >
-        <TouchableOpacity
-          style={[styles.nextButton, !selectedGoal && styles.nextButtonDisabled]}
-          onPress={handleNext}
-          disabled={!selectedGoal}
-        >
-          <LinearGradient
-            colors={selectedGoal ? ['#8B5CF6', '#7C3AED', '#6D28D9'] : ['#D1D5DB', '#9CA3AF']}
-            style={styles.nextButtonGradient}
-          >
-            <Text style={[styles.nextButtonText, !selectedGoal && styles.nextButtonTextDisabled]}>
-              Next
-            </Text>
+      <Animated.View entering={FadeInDown.delay(800).springify()} style={styles.buttonContainer}>
+        <TouchableOpacity style={[styles.nextButton, !selectedGoal && styles.nextButtonDisabled]} onPress={handleNext} disabled={!selectedGoal}>
+          <LinearGradient colors={selectedGoal ? ['#8B5CF6', '#7C3AED', '#6D28D9'] : ['#D1D5DB', '#9CA3AF']} style={styles.nextButtonGradient}>
+            <Text style={[styles.nextButtonText, !selectedGoal && styles.nextButtonTextDisabled]}>Next</Text>
           </LinearGradient>
         </TouchableOpacity>
       </Animated.View>
     </>
-  );
+  )
 
   const renderThankYouScreen = () => (
     <>
@@ -352,10 +277,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ navigation }) => {
       {renderHeader()}
 
       <View style={styles.content}>
-        <Animated.View
-          entering={FadeInUp.delay(300).springify()}
-          style={styles.avatarContainer}
-        >
+        <Animated.View entering={FadeInUp.delay(300).springify()} style={styles.avatarContainer}>
           <View style={styles.avatarCircleLarge}>
             <Text style={styles.avatarEmojiLarge}>👨‍💼</Text>
           </View>
@@ -364,10 +286,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ navigation }) => {
           </View>
         </Animated.View>
 
-        <Animated.View
-          entering={FadeInUp.delay(500).springify()}
-          style={styles.textContainer}
-        >
+        <Animated.View entering={FadeInUp.delay(500).springify()} style={styles.textContainer}>
           <Text style={styles.title}>Thank you{userName ? `, ${userName}` : ''}!</Text>
           <Text style={styles.subtitle}>
             I have a program with lessons,{'\n'}
@@ -384,36 +303,30 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ navigation }) => {
         </Animated.View>
       </View>
 
-      <Animated.View
-        entering={FadeInDown.delay(700).springify()}
-        style={styles.buttonContainer}
-      >
+      <Animated.View entering={FadeInDown.delay(700).springify()} style={styles.buttonContainer}>
         <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-          <LinearGradient
-            colors={['#8B5CF6', '#7C3AED', '#6D28D9']}
-            style={styles.nextButtonGradient}
-          >
+          <LinearGradient colors={['#8B5CF6', '#7C3AED', '#6D28D9']} style={styles.nextButtonGradient}>
             <Text style={styles.nextButtonText}>Next</Text>
           </LinearGradient>
         </TouchableOpacity>
       </Animated.View>
     </>
-  );
+  )
 
   const renderCurrentScreen = () => {
     switch (currentStep) {
       case 1:
-        return renderIntroScreen();
+        return renderIntroScreen()
       case 2:
-        return renderNameScreen();
+        return renderNameScreen()
       case 3:
-        return renderGoalsScreen();
+        return renderGoalsScreen()
       case 4:
-        return renderThankYouScreen();
+        return renderThankYouScreen()
       default:
-        return renderIntroScreen();
+        return renderIntroScreen()
     }
-  };
+  }
 
   return (
     <View style={styles.container}>
@@ -424,19 +337,15 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ navigation }) => {
       <View style={styles.bottomProgressContainer}>
         <View style={styles.bottomProgressBar}>
           {[...Array(totalSteps)].map((_, index) => (
-            <View
-              key={index}
-              style={[
-                styles.progressDot,
-                { backgroundColor: index < currentStep ? '#8B5CF6' : '#E5E5E5' }
-              ]}
-            />
+            <View key={index} style={[styles.progressDot, { backgroundColor: index < currentStep ? '#8B5CF6' : '#E5E5E5' }]} />
           ))}
         </View>
       </View>
+
+      <CustomAlert {...alertProps} />
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -782,6 +691,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6B7280',
   },
-});
+})
 
-export default OnboardingFlow;
+export default OnboardingFlow

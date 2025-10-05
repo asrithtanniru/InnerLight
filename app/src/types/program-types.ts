@@ -1,6 +1,7 @@
 // src/types/program-types.ts
 
 export interface Slide {
+  subtitle: any
   id: string
   type: 'content' | 'challenge' | 'reflection' | 'completion'
   title: string

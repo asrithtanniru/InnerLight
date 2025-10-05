@@ -1,8 +1,9 @@
 // src/screens/program/ProgramDetailScreen.tsx
 import React, { useState, useEffect } from 'react'
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, SafeAreaView, Dimensions, Alert } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, SafeAreaView, Dimensions } from 'react-native'
 import { RouteProp, useFocusEffect } from '@react-navigation/native'
 import { StackNavigationProp } from '@react-navigation/stack'
+import { Ionicons } from '@expo/vector-icons'
 import { Program, ProgramProgress, ModuleProgress, LessonProgress } from '../../types/program-types'
 import { programService } from '../../services/programService'
 import { progressService } from '../../services/progressService'
@@ -11,6 +12,8 @@ import { ModuleCard } from '../../components/program/ModuleCard'
 import { LessonCard } from '../../components/program/LessonCard'
 import { colors } from '../../utils/colors'
 import { Typography } from '../../utils/typography'
+import { useCustomAlert } from '../../hooks/useCustomAlert'
+import CustomAlert from '../../components/common/CustomAlert'
 
 type RootStackParamList = {
   ProgramDetail: { programId: string; source?: string }
@@ -36,6 +39,7 @@ const { width } = Dimensions.get('window')
 export const ProgramDetailScreen: React.FC<Props> = ({ route, navigation }) => {
   const { programId } = route.params
   const { enrollInProgram: enrollInProgramContext, getProgramProgress } = useProgramContext()
+  const { showAlert, alertProps } = useCustomAlert()
 
   const [program, setProgram] = useState<Program | null>(null)
   const [programProgress, setProgramProgress] = useState<ProgramProgress | null>(null)
@@ -48,7 +52,6 @@ export const ProgramDetailScreen: React.FC<Props> = ({ route, navigation }) => {
     loadProgramData()
   }, [programId])
 
-  // Reload data when screen comes into focus (e.g., returning from a lesson)
   useFocusEffect(
     React.useCallback(() => {
       loadProgramData()
@@ -62,17 +65,19 @@ export const ProgramDetailScreen: React.FC<Props> = ({ route, navigation }) => {
       // Load program
       const programData = programService.getProgram(programId)
       if (!programData) {
-        Alert.alert('Error', 'Program not found')
-        navigation.goBack()
+        showAlert({
+          title: 'Error',
+          message: 'Program not found',
+          type: 'error',
+          onConfirm: () => navigation.goBack(),
+        })
         return
       }
       setProgram(programData)
 
-      // Load program progress from context
       const progress = getProgramProgress(programId)
       setProgramProgress(progress || null)
 
-      // Load module progresses
       const moduleProgressData: { [key: string]: ModuleProgress } = {}
       for (const module of programData.modules) {
         const moduleProgress = await progressService.getModuleProgress(module.id)
@@ -82,7 +87,6 @@ export const ProgramDetailScreen: React.FC<Props> = ({ route, navigation }) => {
       }
       setModuleProgresses(moduleProgressData)
 
-      // Load lesson progresses
       const lessonProgressData: { [key: string]: LessonProgress } = {}
       for (const module of programData.modules) {
         for (const lesson of module.lessons) {
@@ -94,7 +98,6 @@ export const ProgramDetailScreen: React.FC<Props> = ({ route, navigation }) => {
       }
       setLessonProgresses(lessonProgressData)
 
-      // Auto-expand first incomplete module
       if (!progress || progress.progressPercentage < 100) {
         const firstIncompleteModule = programData.modules.find((module) => !moduleProgressData[module.id]?.isCompleted)
         if (firstIncompleteModule) {
@@ -103,7 +106,11 @@ export const ProgramDetailScreen: React.FC<Props> = ({ route, navigation }) => {
       }
     } catch (error) {
       console.error('Error loading program data:', error)
-      Alert.alert('Error', 'Failed to load program data')
+      showAlert({
+        title: 'Error',
+        message: 'Failed to load program data',
+        type: 'error',
+      })
     } finally {
       setLoading(false)
     }
@@ -115,15 +122,26 @@ export const ProgramDetailScreen: React.FC<Props> = ({ route, navigation }) => {
 
       const success = await enrollInProgramContext(programId)
       if (success) {
-        // Reload data to get updated progress
         await loadProgramData()
-        Alert.alert('Success', `You have been enrolled in ${program.title}!`)
+        showAlert({
+          title: 'Success',
+          message: `You have been enrolled in ${program.title}!`,
+          type: 'success',
+        })
       } else {
-        Alert.alert('Error', 'Failed to enroll in program. Please try again.')
+        showAlert({
+          title: 'Error',
+          message: 'Failed to enroll in program. Please try again.',
+          type: 'error',
+        })
       }
     } catch (error) {
       console.error('Error enrolling in program:', error)
-      Alert.alert('Error', 'Failed to enroll in program. Please try again.')
+      showAlert({
+        title: 'Error',
+        message: 'Failed to enroll in program. Please try again.',
+        type: 'error',
+      })
     }
   }
 
@@ -144,7 +162,6 @@ export const ProgramDetailScreen: React.FC<Props> = ({ route, navigation }) => {
   }
 
   const isLessonLocked = (moduleId: string, lessonId: string): boolean => {
-    // Remove all lesson locking - make all lessons accessible
     return false
   }
 
@@ -168,7 +185,6 @@ export const ProgramDetailScreen: React.FC<Props> = ({ route, navigation }) => {
             <TouchableOpacity
               style={styles.backButton}
               onPress={() => {
-                // Check if we can go back, otherwise go to Explore
                 if (navigation.canGoBack()) {
                   navigation.goBack()
                 } else {
@@ -176,7 +192,7 @@ export const ProgramDetailScreen: React.FC<Props> = ({ route, navigation }) => {
                 }
               }}
             >
-              <Text style={styles.backButtonText}>←</Text>
+              <Ionicons name="chevron-back" size={24} color={colors.text.primary} />
             </TouchableOpacity>
           </View>
         </View>
@@ -204,9 +220,9 @@ export const ProgramDetailScreen: React.FC<Props> = ({ route, navigation }) => {
           )}
         </View>
 
-        {/* Modules */}
-        <View style={styles.modulesContainer}>
-          {program.modules.map((module) => (
+        {/* Modules Container with white background */}
+        <View style={styles.modulesWrapper}>
+          {program.modules.map((module, index) => (
             <View key={module.id}>
               <ModuleCard
                 module={module}
@@ -217,7 +233,7 @@ export const ProgramDetailScreen: React.FC<Props> = ({ route, navigation }) => {
                 isExpanded={expandedModules[module.id] || false}
               />
 
-              {/* Lessons */}
+              {/* Lessons - shown when module is expanded */}
               {expandedModules[module.id] && (
                 <View style={styles.lessonsContainer}>
                   {module.lessons.map((lesson) => (
@@ -239,6 +255,8 @@ export const ProgramDetailScreen: React.FC<Props> = ({ route, navigation }) => {
 
         <View style={styles.bottomPadding} />
       </ScrollView>
+
+      <CustomAlert {...alertProps} />
     </SafeAreaView>
   )
 }
@@ -246,7 +264,7 @@ export const ProgramDetailScreen: React.FC<Props> = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background.primary,
+    backgroundColor: '#F9FAFB',
   },
   loadingContainer: {
     flex: 1,
@@ -262,7 +280,7 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     position: 'relative',
-    height: 240,
+    height: Math.max(250, width * 0.6),
   },
   headerImage: {
     width: '100%',
@@ -275,26 +293,31 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
   },
   backButton: {
     position: 'absolute',
     top: 50,
     left: 20,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  backButtonText: {
-    fontSize: 20,
-    color: colors.text.primary,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   programInfoContainer: {
     padding: 24,
     backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    marginTop: -20,
+    marginBottom: 16,
   },
   programTitle: {
     ...Typography.h2,
@@ -315,28 +338,33 @@ const styles = StyleSheet.create({
   progressLabel: {
     ...Typography.body2,
     fontSize: 14,
-    color: colors.text.primary,
+    color: colors.text.secondary,
     marginBottom: 8,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   progressBar: {
-    height: 8,
+    height: 6,
     backgroundColor: '#E5E7EB',
-    borderRadius: 4,
+    borderRadius: 3,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
     backgroundColor: colors.primary.main,
-    borderRadius: 4,
+    borderRadius: 3,
   },
   enrollButton: {
     backgroundColor: colors.primary.main,
-    borderRadius: 16,
+    borderRadius: 12,
     paddingVertical: 16,
     paddingHorizontal: 24,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: colors.primary.main,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   enrollButtonText: {
     ...Typography.button,
@@ -344,15 +372,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  modulesContainer: {
+  modulesWrapper: {
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 24,
+    paddingTop: 8,
+    borderRadius: 20,
+    marginHorizontal: 0,
   },
   lessonsContainer: {
-    marginLeft: 16,
-    marginBottom: 16,
-    paddingLeft: 16,
-    borderLeftWidth: 2,
-    borderLeftColor: '#E5E7EB',
+    paddingLeft: 0,
+    backgroundColor: '#F9FAFB',
+    marginLeft: 0,
+    marginRight: -24,
+    paddingRight: 24,
+    // paddingLeft: 24,
+    paddingVertical: 8,
   },
   bottomPadding: {
     height: 40,
